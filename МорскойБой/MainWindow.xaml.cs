@@ -27,8 +27,9 @@ namespace Battleships
 
         private void MenuItem_NewGame(object sender, RoutedEventArgs e)
         {
-            MenuItem menuItem = (MenuItem)sender;
-            MessageBox.Show(menuItem.Header.ToString());
+            NewGameWindow ng = new NewGameWindow();
+            ng.Owner = this;
+            ng.Show();
         }
     }
 }
