@@ -6,17 +6,37 @@
         xmlns:local="clr-namespace:Battleships"
         mc:Ignorable="d"
         Title="Сетевая игра 'Морской бой' - курсовой проект" Height="450" Width="800">
-    <Grid >
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" x:Name="myField"/>
-            <ColumnDefinition Width="2*" x:Name="enemyField"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="40"/>
-        </Grid.RowDefinitions>
-        <Label x:Name="myFieldLab" Grid.Column="0" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Мое поле</Label>
-        <Label x:Name="enemyFieldLab" Grid.Column="1" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center">Вражеское поле</Label>
-    </Grid>
+    
+        <DockPanel LastChildFill="True">
+            <Menu  DockPanel.Dock="Top" Height="25" VerticalAlignment="Top">
+                <MenuItem Header="New game" Click="MenuItem_NewGame"/>
+                <MenuItem Header="Settings" >
+                    <MenuItem Header="Настройки"/>
+                    <MenuItem Header="Таблица рекордов"/>
+                    <MenuItem Header="Завершить игру"/>
+                </MenuItem>
+            
+            <MenuItem Header="Help" >
+                    <MenuItem Header="Правила игры"></MenuItem>
+                    <MenuItem Header="О программе"></MenuItem>
+                </MenuItem>
+            
+        </Menu>
+        <Grid >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" x:Name="myField"/>
+                <ColumnDefinition Width="2*" x:Name="enemyField"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="40"/>
+            </Grid.RowDefinitions>
+            <Label x:Name="myFieldLab" Grid.Column="0" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Мое поле</Label>
+            <Label x:Name="enemyFieldLab" Grid.Column="1" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center">Вражеское поле</Label>
+        </Grid>
+    </DockPanel>
+   
+        
+    
 </Window>

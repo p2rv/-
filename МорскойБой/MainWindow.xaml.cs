@@ -24,5 +24,11 @@ namespace Battleships
         {
             InitializeComponent();
         }
+
+        private void MenuItem_NewGame(object sender, RoutedEventArgs e)
+        {
+            MenuItem menuItem = (MenuItem)sender;
+            MessageBox.Show(menuItem.Header.ToString());
+        }
     }
 }
