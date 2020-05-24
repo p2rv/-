@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace МорскойБой.Properties
+namespace Battleships.Properties
 {
 
 
