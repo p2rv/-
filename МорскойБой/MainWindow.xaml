@@ -6,37 +6,43 @@
         xmlns:local="clr-namespace:Battleships"
         mc:Ignorable="d"
         Title="Сетевая игра 'Морской бой' - курсовой проект" Height="450" Width="800">
-    
-        <DockPanel LastChildFill="True">
-            <Menu  DockPanel.Dock="Top" Height="25" VerticalAlignment="Top">
-                <MenuItem Header="New game" Click="MenuItem_NewGame"/>
-                <MenuItem Header="Settings" >
-                    <MenuItem Header="Настройки"/>
-                    <MenuItem Header="Таблица рекордов"/>
-                    <MenuItem Header="Завершить игру"/>
-                </MenuItem>
-            
+
+    <DockPanel LastChildFill="True">
+        <Menu  DockPanel.Dock="Top" Height="25" VerticalAlignment="Top">
+            <MenuItem Header="New game" Click="MenuItem_NewGame"/>
+            <MenuItem Header="Settings" >
+                <MenuItem Header="Настройки"/>
+                <MenuItem Header="Таблица рекордов"/>
+                <MenuItem Header="Завершить игру"/>
+            </MenuItem>
+
             <MenuItem Header="Help" >
-                    <MenuItem Header="Правила игры"></MenuItem>
-                    <MenuItem Header="О программе"></MenuItem>
-                </MenuItem>
-            
+                <MenuItem Header="Правила игры"></MenuItem>
+                <MenuItem Header="О программе"></MenuItem>
+            </MenuItem>
+            <Button Click="Button_Click">waitConnect</Button>
+
         </Menu>
+        <StatusBar DockPanel.Dock="Bottom" >
+            <TextBox x:Name="tb_statusbar" Text="{Binding State}" TextChanged="Tb_statusbar_TextChanged"/>
+        </StatusBar>
         <Grid >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" x:Name="myField"/>
-                <ColumnDefinition Width="2*" x:Name="enemyField"/>
+                <ColumnDefinition x:Name="myField"/>
+                <ColumnDefinition Width="11*"/>
+                <ColumnDefinition Width="12*" x:Name="enemyField"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
-            <Label x:Name="myFieldLab" Grid.Column="0" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Мое поле</Label>
-            <Label x:Name="enemyFieldLab" Grid.Column="1" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center">Вражеское поле</Label>
+            <Label x:Name="lb_player1" Grid.Column="1" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="122,4,155,4">Мое поле</Label>
+            <Label x:Name="lb_player2" Grid.Column="2" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="129,4">Вражеское поле</Label>
         </Grid>
+
     </DockPanel>
-   
-        
-    
+
+
+
 </Window>

@@ -1,16 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using System.Net;
 
 namespace Battleships
 {
@@ -19,26 +12,31 @@ namespace Battleships
     /// </summary>
     public partial class NewGameWindow : Window
     {
-        private string IP_;
-        private string PlayerName_;
-        public string IP { get; set; }
+        public string IP
+        {
+            get { return tb_ip.Text; }
+            set { tb_ip.Text = value; }
+        }
+        
         public string PlayerName
         {
-            get { return PlayerName_; }
-            set {
-                PlayerName_ = value;
-                if (String.IsNullOrEmpty(PlayerName_))
-                    PlayerName_ = System.Net.Dns.GetHostName();
-                    }
+            get { return tb_playername.Text; }
+            set
+            {
+                tb_playername.Text = value;
+                if (String.IsNullOrEmpty(tb_playername.Text))
+                    tb_playername.Text = System.Net.Dns.GetHostName();
+
+            }
         }
         public NewGameWindow(string ip="", string playername="")
         {
-            IP = ip;
-            PlayerName = playername;
-            InitializeComponent();
-            tb_playername.Text = PlayerName;
-            tb_ip.Text = IP;
             
+            InitializeComponent();
+            PlayerName = playername;
+            IP = ip;
+            this.ResizeMode = ResizeMode.NoResize;
+
         }
         private List<int> GetAddressBytes(string ip_str)
         {
@@ -46,45 +44,56 @@ namespace Battleships
             string[] ip = ip_str.Split(new char[] { '.' });
             foreach(string octet in ip)
             {
-                int val;
-                if (Int32.TryParse(octet, out val))
+                if (Int32.TryParse(octet, out int val))
                     ip_octets.Add(val);
             }
             return ip_octets;
         }
+
+        // Валидация ввода ip адреса
+        // в текстбокс можно вводить только цифры и точки
+        // число в каждом из октетов IP адреса не может превышать 255
         private void Tb_ip_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            int val;
-            List<int> ip_octets;
-            if (!Int32.TryParse(e.Text, out val) && e.Text != ".")
+
+            //отклоняем все символы кроме цифр и точки 
+            if (!Int32.TryParse(e.Text, out int val) && e.Text != ".")
             {
                 e.Handled = true; // отклоняем ввод
                 return;
             }
+
+
+            //если число в последнем октете превышает 255 то отклоняем ввод
+            List<int> ip_octets;
             ip_octets = GetAddressBytes(tb_ip.Text+e.Text);
             if (ip_octets.Last() > 255)
             {
                 e.Handled = true;
                 return;
             }
-           
+
+            //после четвертого октета не должно быть точки
+            if (ip_octets.Count == 4 && e.Text==".")
+                e.Handled = true;
 
         }
 
+        // Валидация ввода ip адреса
+        //
         private void Tb_ip_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            // если пробел, отклоняем ввод
             if (e.Key == Key.Space)
             {
-                e.Handled = true; // если пробел, отклоняем ввод
+                e.Handled = true; 
             }
         }
 
-        private void Tb_ip_TextChanged(object sender, TextChangedEventArgs e)
+        private void Connect_Click(object sender, RoutedEventArgs e)
         {
-            //List<byte> ip_octets;
-            //ip_octets = GetAddressBytes(tb_ip.Text);
-            //if (ip_octets.Last() >= 100 && tb_ip.Text.Last()!='.')
-            //    tb_ip.Text +=  ".";
+
+            this.DialogResult = true;
         }
     }
 }
