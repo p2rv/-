@@ -26,8 +26,10 @@ namespace Battleships
         {
             InitializeComponent();
             mynet = new Network();
-            mynet.StartServer();
+            Player1_name = "loser006";
             this.DataContext = mynet;
+
+            mynet.StartServer();
         }
 
         private void MenuItem_NewGame(object sender, RoutedEventArgs e)
@@ -37,7 +39,7 @@ namespace Battleships
             {
                 mynet.SetIP(ng.IP);
                 Player1_name = ng.PlayerName;
-                Try_connect(mynet.IP);
+                mynet.CreateConnect();
             }
             else
                 tb_statusbar.Text = "Отмена создания новой сетевой игры";
@@ -46,26 +48,25 @@ namespace Battleships
         private string Player1_name
         {
             get { return player1_name; }
-            set { lb_player1.Content = "Мое поле (" + value + ")"; player1_name = value; }
+            set { player1_name = value; mynet.MyName = value; }
         }
       
-        public bool Try_connect(string ip)
-        {
-            tb_statusbar.Text = "соединение с "+ip+" ...";
-            mynet.Send("Hellow! My name is " + Player1_name);
-
-            return true;
-        }
 
 
 
         //todo добавить обработчик начала новной игры
         private void Tb_statusbar_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if(tb_statusbar.Text=="#New game#")
-            {
+            //if(tb_statusbar.Text.Substring(0, 9) == "/go_batle")
+            //{
+            //    MessageBoxResult result = MessageBox.Show("Вооу, Нам кинули вызов", "Запрос на начало игры", MessageBoxButton.YesNo);
+            //}
+        }
+        ~MainWindow()
+        {
+            if (mynet.IsServerActive)
+                mynet.StopServer();
 
-            }
         }
     }
 }

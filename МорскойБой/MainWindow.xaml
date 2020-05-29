@@ -20,25 +20,31 @@
                 <MenuItem Header="Правила игры"></MenuItem>
                 <MenuItem Header="О программе"></MenuItem>
             </MenuItem>
-            <Button Click="Button_Click">waitConnect</Button>
-
         </Menu>
         <StatusBar DockPanel.Dock="Bottom" >
             <TextBox x:Name="tb_statusbar" Text="{Binding State}" TextChanged="Tb_statusbar_TextChanged"/>
         </StatusBar>
         <Grid >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="myField"/>
-                <ColumnDefinition Width="11*"/>
-                <ColumnDefinition Width="12*" x:Name="enemyField"/>
+                <ColumnDefinition x:Name="myField" Width="*"/>
+                <ColumnDefinition x:Name="splitter" Width="auto"/>
+                <ColumnDefinition x:Name="enemyField" Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
-            <Label x:Name="lb_player1" Grid.Column="1" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="122,4,155,4">Мое поле</Label>
-            <Label x:Name="lb_player2" Grid.Column="2" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="129,4">Вражеское поле</Label>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                <Label x:Name="lb_player1"  FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Мое поле</Label>
+                <TextBox x:Name="tb_player1" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding MyName}" Width="160"/>
+            </StackPanel>
+            <GridSplitter Grid.Column="1" ShowsPreview="False" Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Grid.RowSpan="3"/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                <Label x:Name="lb_player2"  FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Вражеское поле</Label>
+                <TextBox x:Name="tb_player2" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding PlayerName}" Width="160" IsReadOnly="True"/>
+            </StackPanel>
+            
         </Grid>
 
     </DockPanel>
