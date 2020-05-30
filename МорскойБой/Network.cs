@@ -17,7 +17,7 @@ namespace Battleships
     {
         private Thread thread;
         private Dispatcher dispatcher;
-        private CancellationTokenSource currentOperationToken;
+        private CancellationTokenSource waitConnectionToken,waitMessagesToken;
         private int port;
         private IPAddress ip;
         private IPEndPoint ipEndPoint;
@@ -26,7 +26,7 @@ namespace Battleships
         private Client client;
         private string myName;
 
-        public Network(string _myName="")
+        public Network(string _myName = "")
         {
             port = 8005;
             ip = IPAddress.Parse("127.0.0.1");
@@ -34,6 +34,7 @@ namespace Battleships
             myName = _myName;
             client = new Client();
         }
+
         string status;
         public String State
         {
@@ -72,7 +73,7 @@ namespace Battleships
                     client.PlayerName = value;
                     OnPropertyChanged("PlayerName");
                 }), null);
-               
+
             }
         }
 
@@ -92,7 +93,7 @@ namespace Battleships
         {
             get
             {
-                if (ip == null || ip.ToString()=="127.0.0.1")
+                if (ip == null || ip.ToString() == "127.0.0.1")
                     return "";
                 return ip.ToString();
             }
@@ -110,7 +111,7 @@ namespace Battleships
 
             if (ipEndPoint == null)
                 ipEndPoint = new IPEndPoint(IPAddress.Any, port); //У компьютера может быть несколько сетевых плат с несколькими IP-адресами. 
-                                                           //Сокет использует IPAddress.Any, чтобы ожидать действия на любом из этих сетевых интерфейсов.
+                                                                  //Сокет использует IPAddress.Any, чтобы ожидать действия на любом из этих сетевых интерфейсов.
 
             if (listenSocket == null)
             {
@@ -147,37 +148,22 @@ namespace Battleships
             return msg.ToString();
         }
 
-        public bool Send(string msg)
+        public void KillSocket(Socket socket)
         {
-            if (ipEndPoint == null)
-                ipEndPoint = new IPEndPoint(ip, port);
+
+            if (socket == null) return;
             try
             {
-                if (listenSocket == null)
-                {
-                    listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    listenSocket.Connect(ipEndPoint);
-                }
-                // связываем сокет с локальной точкой, по которой будем принимать данные
-
-                byte[] data = new byte[256]; // буфер для получаемых данных
-                data = Encoding.Unicode.GetBytes(msg);
-                listenSocket.Send(data);
-
+                socket.Shutdown(SocketShutdown.Both);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return false;
-            }
-            return true;
-        }
 
-        public void KillSocket()
-        {
-            if (connection != null)
-                connection.Shutdown(SocketShutdown.Both);
-            if (listenSocket != null)
-                listenSocket.Close();
+            }
+            finally
+            {
+                socket.Close();
+            }
         }
 
         public async void StartServer()
@@ -196,20 +182,21 @@ namespace Battleships
                 listenSocket.Bind(ipEndPoint);
                 listenSocket.Listen(1);
 
-                //CancellationTokenSource - специальный механизм который позволяет отправить в паралельно выполняющийся поток сигнал о заверешении этого потока
-                currentOperationToken = new CancellationTokenSource();
-                await Task.Run(() => this.WaitForConnections(currentOperationToken.Token)); //WaitForConnections (ожидание подключений) запускаем в паралельном потоке чтобы не зависал интерфейс
-               
 
                 this.IsServerActive = true;
                 State = "Server is active. Wait connection";
-            }catch(Exception ex)
+
+                //CancellationTokenSource - специальный механизм который позволяет отправить в паралельно выполняющийся поток сигнал о заверешении этого потока
+                waitConnectionToken = new CancellationTokenSource();
+                await Task.Run(() => this.WaitForConnections(waitConnectionToken.Token)); //WaitForConnections (ожидание подключений) запускаем в паралельном потоке чтобы не зависал интерфейс
+            }
+            catch (Exception ex)
             {
                 //что то пошло не так
                 //подчищаем хвосты
                 StopServer();
                 //сообщаем об ошибке
-                State = "/Error -Start server fail! " + ex.Message+"Source: "+ex.Source;
+                State = "/Error -Start server fail! " + ex.Message + "Source: " + ex.Source;
             }
         }
 
@@ -217,19 +204,11 @@ namespace Battleships
         {
             if (this.thread != null)
             {
-                currentOperationToken.Cancel();
+                waitConnectionToken.Cancel();
             }
 
-            try
-            {
-                if (listenSocket != null)
-                    listenSocket.Shutdown(SocketShutdown.Both);
-            }
-            catch(Exception)
-            {
-                listenSocket.Close();
-            }
-            
+            KillSocket(listenSocket);
+
             if (ipEndPoint != null)
                 ipEndPoint = null;
 
@@ -248,8 +227,8 @@ namespace Battleships
                     client.Socket = listenSocket.Accept();
 
                     //как только соединение установлено получаем первое собщение от клиента в котором должно содержать имя игрока бросившего нам вызов
-                    GetHelloMsg(client);
-                    SendMessage(client, "/my_name " + myName);
+                    GetMessage(client);
+                    
                 }
                 catch (Exception ex)
                 {
@@ -260,7 +239,24 @@ namespace Battleships
             }
         }
 
-        private void GetHelloMsg(Client client)
+        public async void WaitMessage()
+        {
+            waitMessagesToken = new CancellationTokenSource();
+            await Task.Run(() => this.GetMessages(this.client, waitMessagesToken.Token));
+        }
+
+        private void GetMessages(Client client, CancellationToken token)
+        {
+            //ожидаем в бесконечном цикле сообщения
+            while (true)
+            {
+                GetMessage(client);
+                if (token.IsCancellationRequested)
+                    return;
+            }
+        }
+
+        private void GetMessage(Client client)
         {
             try
             {
@@ -269,26 +265,44 @@ namespace Battleships
                 if (x > 0)
                 {
                     string strMessage = Encoding.Unicode.GetString(inf);
-                    // check and execute commands
+                    
+                    //выполняем полученную команду
                     if (strMessage.Substring(0, 9) == "/go_batle")
                     {
                         string newUsername = strMessage.Replace("/go_batle ", "").Trim('\0');
-
+                        SendMessage("/my_name " + myName);
 
                         this.dispatcher.Invoke(new Action(() =>
                         {
                             PlayerName = newUsername;
-                            State = "/go_batle "+ client.PlayerName;
+                            State = "/go_batle";
                         }), null);
 
                     }
-                    if(strMessage.Substring(0, 8) == "/my_name")
+                    if (strMessage.Substring(0, 8) == "/my_name")
                     {
                         string newUsername = strMessage.Replace("/my_name ", "").Trim('\0');
                         this.dispatcher.Invoke(new Action(() =>
                         {
                             PlayerName = newUsername;
                         }), null);
+                    }
+                    if (strMessage.Substring(0, 4) == "/Yes")
+                    {
+                        this.dispatcher.Invoke(new Action(() =>
+                        {
+                            State = "/Yes";
+                        }), null);
+                    }
+                    if (strMessage.Substring(0, 3) == "/No")
+                    {
+                        
+                        this.dispatcher.Invoke(new Action(() =>
+                        {
+                            State = "/No";
+                        }), null);
+                        KillSocket(client.Socket);
+                        client.Socket = null;
                     }
 
                 }
@@ -297,6 +311,11 @@ namespace Battleships
             {
                 State = "/Error -Receive message fail! " + ex.Message;
             }
+        }
+
+        public void SendMessage(string msg)
+        {
+            SendMessage(client, msg);
         }
 
         private void SendMessage(Client from, string strMessage)
@@ -313,7 +332,7 @@ namespace Battleships
 
         public void CreateConnect()
         {
-            if (this.IsClientConnected)  return;
+            if (this.IsClientConnected) return;
 
             client = new Client();
             //PlayerName = "NewUser"; // Временное имя пользователя
@@ -322,10 +341,10 @@ namespace Battleships
                 ipEndPoint = new IPEndPoint(ip, port);
                 client.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 client.Socket.Connect(ipEndPoint);
-                SendMessage(client, "/go_batle "+MyName);
+                SendMessage("/go_batle " + MyName);
                 IsClientConnected = true;
                 State = "Сonnected. Awaiting confirmation";
-                GetHelloMsg(client); //получаем имя соперника
+                GetMessage(client); //получаем имя соперника
                 //а дальше нужно запустить поток в котором ожидать согласия на начало игры
             }
             catch (Exception ex)
@@ -333,64 +352,14 @@ namespace Battleships
                 State = "/Error -Create connection fail! " + ex.Message;
             }
         }
- 
 
-
-        void ProcessMessages(Client c)
+        public void StopConnection()
         {
-            //while (true)
-            //{
-            //    try
-            //    {
-            //        if (!c.IsSocketConnected())
-            //        {
-            //            this.dispatcher.Invoke(new Action(() =>
-            //            {
-            //                Status = "#Обрыв соединения";
-            //            }), null);
-
-            //            return;
-            //        }
-
-            //        byte[] inf = new byte[1024];
-            //        int x = c.Socket.Receive(inf);
-            //        if (x > 0)
-            //        {
-            //            string strMessage = Encoding.Unicode.GetString(inf);
-            //            // check and execute commands
-            //            if (strMessage.Substring(0, 8) == "/setname")
-            //            {
-            //                string newUsername = strMessage.Replace("/setname ", "").Trim('\0');
-
-            //                c.Username = newUsername;
-            //            }
-            //            else if (strMessage.Substring(0, 6) == "/msgto")
-            //            {
-            //                string data = strMessage.Replace("/msgto ", "").Trim('\0');
-            //                string targetUsername = data.Substring(0, data.IndexOf(':'));
-            //                string message = data.Substring(data.IndexOf(':') + 1);
-
-            //                this._dispatcher.Invoke(new Action(() =>
-            //                {
-            //                    SendMessage(c, targetUsername, message);
-            //                }), null);
-            //            }
-
-            //        }
-            //    }
-            //    catch (Exception)
-            //    {
-            //        this._dispatcher.Invoke(new Action(() =>
-            //        {
-            //            lstClients.Remove(c);
-            //            c.Dispose();
-            //        }), null);
-            //        return;
-            //    }
-            //}
+            KillSocket(client.Socket);
+            client.Socket = null;
         }
 
-        public bool IsServerActive 
+        public bool IsServerActive
         {
             get;
             private set;

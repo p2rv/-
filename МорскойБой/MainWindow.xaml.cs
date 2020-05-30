@@ -40,6 +40,7 @@ namespace Battleships
                 mynet.SetIP(ng.IP);
                 Player1_name = ng.PlayerName;
                 mynet.CreateConnect();
+                mynet.WaitMessage();
             }
             else
                 tb_statusbar.Text = "Отмена создания новой сетевой игры";
@@ -57,10 +58,21 @@ namespace Battleships
         //todo добавить обработчик начала новной игры
         private void Tb_statusbar_TextChanged(object sender, TextChangedEventArgs e)
         {
-            //if(tb_statusbar.Text.Substring(0, 9) == "/go_batle")
-            //{
-            //    MessageBoxResult result = MessageBox.Show("Вооу, Нам кинули вызов", "Запрос на начало игры", MessageBoxButton.YesNo);
-            //}
+            if(tb_statusbar.Text == "/go_batle")
+            {
+                MessageBoxResult result = MessageBox.Show("Вооу, Нам кинули вызов. Начнем бой?", "Запрос на начало игры", MessageBoxButton.YesNo);
+                if (result == MessageBoxResult.Yes)
+                    mynet.SendMessage("/Yes");
+                else
+                {
+                    mynet.SendMessage("/No");
+                    mynet.StopConnection();
+                }
+            }
+            if (tb_statusbar.Text == "/Yes")
+               MessageBox.Show("Противник принял наш вызов. Теперь необходимо расставить карабли по карте. Если вы забыли правила игры загляните в раздел справки", "В бойййй!", MessageBoxButton.OK);
+            if (tb_statusbar.Text == "/No")
+                MessageBox.Show("Противник не принял наш вызов. Засчитываем это как техническое поражение!", "Противник струсил", MessageBoxButton.OK);
         }
         ~MainWindow()
         {
