@@ -160,15 +160,15 @@
                                 <TextBlock Grid.Row="1" x:Name="tb_ship3" Text="2"/>
                                 <TextBlock Grid.Row="2" x:Name="tb_ship2" Text="3"/>
                                 <TextBlock Grid.Row="3" x:Name="tb_ship1" Text="4"/>
-                                <RadioButton Grid.Column="1" Grid.Row="0" GroupName="Ship" Content="четырёхпалубный" IsChecked="True"  />
-                                <RadioButton Grid.Column="1" Grid.Row="1" GroupName="Ship" Content="трёхпалубный" IsChecked="False"  />
-                                <RadioButton Grid.Column="1" Grid.Row="2" GroupName="Ship" Content="двухпалубный" IsChecked="False" />
-                                <RadioButton Grid.Column="1" Grid.Row="3" GroupName="Ship" Content="однопалубный" IsChecked="False"  />
+                                <RadioButton Grid.Column="1" Grid.Row="0" x:Name="rb_4" GroupName="Ship" Content="четырёхпалубный" IsChecked="True" Checked="Set4" />
+                                <RadioButton Grid.Column="1" Grid.Row="1" x:Name="rb_3" GroupName="Ship" Content="трёхпалубный" IsChecked="False"  Checked="Set3"/>
+                                <RadioButton Grid.Column="1" Grid.Row="2" x:Name="rb_2" GroupName="Ship" Content="двухпалубный" IsChecked="False" Checked="Set2"/>
+                                <RadioButton Grid.Column="1" Grid.Row="3" x:Name="rb_1" GroupName="Ship" Content="однопалубный" IsChecked="False"  Checked="Set1"/>
                             </Grid>
                         </GroupBox>
                         <StackPanel Orientation="Horizontal">
                             <Button Margin="20,0,0,0">Очистить поле</Button>
-                            <Button Margin="20,0,0,0" Foreground="Black" FontWeight="Bold">В бой! </Button>
+                            <Button Margin="20,0,0,0">В бой! </Button>
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>
