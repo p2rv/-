@@ -20,7 +20,7 @@
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Label Grid.Row="0"  VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="14">IP адрес второго игрока</Label>
+            <Label Grid.Row="0"  VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="14">IP адрес соперника</Label>
             <Label Grid.Row="1" FontSize="14" HorizontalAlignment="Right" VerticalAlignment="Center">Ваше имя </Label>
             <TextBox Grid.Row="0" Grid.Column="1" x:Name="tb_ip" Height="25" Grid.ColumnSpan="2" Margin="0,2" PreviewTextInput="Tb_ip_PreviewTextInput" PreviewKeyDown="Tb_ip_PreviewKeyDown" Width="140" HorizontalAlignment="Left" />
             <TextBox Grid.Row="1" Grid.Column="1" x:Name="tb_playername" Height="25" Grid.ColumnSpan="2" Margin="0,2" Width="140" HorizontalAlignment="Left"/>

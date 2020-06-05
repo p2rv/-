@@ -17,6 +17,57 @@ using System.Net.Sockets;
 
 namespace Battleships
 {
+    public class Cell : Button
+    {
+        private bool isdesk = false;
+        private bool isdamage = false;
+
+        public bool IsDesk
+        {
+            get { return isdesk; }
+            set
+            {
+                isdesk = value;
+                this.Background = Brushes.Transparent;
+                if (isdesk)
+                    this.Background = Brushes.Green;
+            }
+        }
+        public bool IsFree
+        {
+            get { return !isdesk; }
+        }
+        public bool IsDamage
+        {
+            get { return isdamage; }
+            set
+            {
+                isdamage = value;
+                if (isdamage)
+                {
+                    if (isdesk)
+                    {
+                        Content = "X";
+                        Foreground = Brushes.Red;
+                        FontWeight = FontWeights.Bold;
+                    }
+                    else
+                    {
+                        Content = "o";
+                        Foreground = Brushes.SlateGray;
+                        FontWeight = FontWeights.Bold;
+                    }
+                }
+                else
+                {
+                    Content = "";
+                    Foreground = Brushes.Transparent;
+                    FontWeight = FontWeights.Bold;
+                }
+            }
+        }
+    }
+
     public partial class MainWindow : Window
     {
         private Network mynet;
@@ -60,7 +111,7 @@ namespace Battleships
         {
             if(tb_statusbar.Text == "/go_batle")
             {
-                MessageBoxResult result = MessageBox.Show("Вооу, Нам кинули вызов. Начнем бой?", "Запрос на начало игры", MessageBoxButton.YesNo);
+                MessageBoxResult result = MessageBox.Show(this,"Вооу, Нам кинули вызов. Начнем бой?", "Запрос на начало игры", MessageBoxButton.YesNo);
                 if (result == MessageBoxResult.Yes)
                     mynet.SendMessage("/Yes");
                 else
@@ -70,9 +121,9 @@ namespace Battleships
                 }
             }
             if (tb_statusbar.Text == "/Yes")
-               MessageBox.Show("Противник принял наш вызов. Теперь необходимо расставить карабли по карте. Если вы забыли правила игры загляните в раздел справки", "В бойййй!", MessageBoxButton.OK);
+               MessageBox.Show(this, "Противник принял наш вызов. Теперь необходимо расставить карабли по карте. Если вы забыли правила игры загляните в раздел справки", "В бойййй!", MessageBoxButton.OK);
             if (tb_statusbar.Text == "/No")
-                MessageBox.Show("Противник не принял наш вызов. Засчитываем это как техническое поражение!", "Противник струсил", MessageBoxButton.OK);
+                MessageBox.Show(this, "Противник не принял наш вызов. Засчитываем это как техническое поражение!", "Противник струсил", MessageBoxButton.OK);
         }
         ~MainWindow()
         {
