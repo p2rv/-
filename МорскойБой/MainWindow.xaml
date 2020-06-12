@@ -9,7 +9,7 @@
 
     <DockPanel LastChildFill="True">
         <Menu  DockPanel.Dock="Top" Height="25" VerticalAlignment="Top">
-            <MenuItem Header="New game" Click="MenuItem_NewGame"/>
+            <MenuItem Header="New game" Click="NewGame"/>
             <MenuItem Header="Settings" >
                 <MenuItem Header="Настройки"/>
                 <MenuItem Header="Таблица рекордов"/>
@@ -144,13 +144,14 @@
                 </Grid>
                 <GroupBox Header="Панель управления">
                     <StackPanel Orientation="Vertical">
-                        <GroupBox Header="Разместите следующие корабли">
+                        <GroupBox x:Name="gb_ArrangeShips" Header="Разместите следующие корабли">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="10"/>
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
+                                    <RowDefinition/>
                                     <RowDefinition/>
                                     <RowDefinition/>
                                     <RowDefinition/>
@@ -164,11 +165,11 @@
                                 <RadioButton Grid.Column="1" Grid.Row="1" x:Name="rb_3" GroupName="Ship" Content="трёхпалубный" IsChecked="False"  Checked="Set3"/>
                                 <RadioButton Grid.Column="1" Grid.Row="2" x:Name="rb_2" GroupName="Ship" Content="двухпалубный" IsChecked="False" Checked="Set2"/>
                                 <RadioButton Grid.Column="1" Grid.Row="3" x:Name="rb_1" GroupName="Ship" Content="однопалубный" IsChecked="False"  Checked="Set1"/>
+                                <Button Grid.Column="1" Grid.Row="4" Margin="20,0,0,0" x:Name="bt_ClearField" Click="Bt_ClearField_Click" >Очистить поле</Button>
                             </Grid>
                         </GroupBox>
                         <StackPanel Orientation="Horizontal">
-                            <Button Margin="20,0,0,0">Очистить поле</Button>
-                            <Button Margin="20,0,0,0">В бой! </Button>
+                            
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>

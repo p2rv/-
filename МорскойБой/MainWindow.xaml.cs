@@ -23,6 +23,7 @@ namespace Battleships
         Win,
         Loss
     }
+
     public enum AttackResult
     {
         Hit,
@@ -31,13 +32,15 @@ namespace Battleships
         Win,
         Loss
     }
+
     public enum GameStage
     {
-        NotStarted,
-        ArrangingShips,
-        Battle,
-        Finished
+        NotStarted,     //старт
+        ArrangingShips, //растановка кораблей
+        Battle,         //бой
+        Finished        //завершение
     }
+
     public enum ShipState
     {
         Undamaged,
@@ -148,7 +151,14 @@ namespace Battleships
             return AttackResult.Loss;
         }
 
+        public void Clear()
+        {
+            foreach (Cell cell in shipCell)
+                cell.IsDesk = false;
+        }
+
     }
+
     public class Unallocated
     {
         public int x4;
@@ -163,19 +173,27 @@ namespace Battleships
             x2 = 3;
             x1 = 4;
         }
+
+        public void Clear()
+        {
+            x4 = 1;
+            x3 = 2;
+            x2 = 3;
+            x1 = 4;
+        }
     }
 
     public partial class MainWindow : Window
     {
-        private GameStage gameStage;
+        private GameStage gameStage; //TODO сделать изменение через свойство, в свойстве активировать кнопки 
         private Network mynet;
         private string player1_name;    //ваше имя 
 
-        private Cell[] compButtons    = new Cell[100];
+        private Cell[] myButtons      = new Cell[100];
         private Cell[] enemyButtons   = new Cell[100];
         private List<Ship> myShips    = new List<Ship>();
         private List<Ship> enemyShips = new List<Ship>();
-        private Unallocated unallocated = new Unallocated();
+        private Unallocated uaShips   = new Unallocated();
 
         private int shipSize;
         private List<Cell> curShip = new List<Cell>(0);
@@ -196,7 +214,7 @@ namespace Battleships
             FillUnallocatedShip();
         }
 
-        private void MenuItem_NewGame(object sender, RoutedEventArgs e)
+        private void NewGame(object sender, RoutedEventArgs e)
         {
             NewGameWindow ng = new NewGameWindow(mynet.IP, Player1_name);
             if (ng.ShowDialog() == true)
@@ -219,48 +237,53 @@ namespace Battleships
 
         private void FillUnallocatedShip()
         {
-            tb_ship1.Text = unallocated.x1.ToString();
-            if (unallocated.x1 == 0)
+            rb_1.IsEnabled = true;
+            rb_2.IsEnabled = true;
+            rb_3.IsEnabled = true;
+            rb_4.IsEnabled = true;
+
+            tb_ship1.Text = uaShips.x1.ToString();
+            if (uaShips.x1 == 0)
             {
                 rb_1.IsEnabled = false;
-                if (rb_1.IsChecked.Value && unallocated.x4 != 0)
+                if (rb_1.IsChecked.Value && uaShips.x4 != 0)
                     rb_4.IsChecked = true;
-                if (rb_1.IsChecked.Value && unallocated.x3 != 0)
+                if (rb_1.IsChecked.Value && uaShips.x3 != 0)
                     rb_3.IsChecked = true;
-                if (rb_1.IsChecked.Value && unallocated.x2 != 0)
+                if (rb_1.IsChecked.Value && uaShips.x2 != 0)
                     rb_2.IsChecked = true;
             }
-            tb_ship2.Text = unallocated.x2.ToString();
-            if (unallocated.x2 == 0)
+            tb_ship2.Text = uaShips.x2.ToString();
+            if (uaShips.x2 == 0)
             {
                 rb_2.IsEnabled = false;
-                if (rb_2.IsChecked.Value && unallocated.x4 != 0)
+                if (rb_2.IsChecked.Value && uaShips.x4 != 0)
                     rb_4.IsChecked = true;
-                if (rb_2.IsChecked.Value && unallocated.x3 != 0)
+                if (rb_2.IsChecked.Value && uaShips.x3 != 0)
                     rb_3.IsChecked = true;
-                if (rb_2.IsChecked.Value && unallocated.x1 != 0)
+                if (rb_2.IsChecked.Value && uaShips.x1 != 0)
                     rb_1.IsChecked = true;
             }
-            tb_ship3.Text = unallocated.x3.ToString();
-            if (unallocated.x3 == 0)
+            tb_ship3.Text = uaShips.x3.ToString();
+            if (uaShips.x3 == 0)
             {
                 rb_3.IsEnabled = false;
-                if (rb_3.IsChecked.Value && unallocated.x4 != 0)
+                if (rb_3.IsChecked.Value && uaShips.x4 != 0)
                     rb_4.IsChecked = true;
-                if (rb_3.IsChecked.Value && unallocated.x2 != 0)
+                if (rb_3.IsChecked.Value && uaShips.x2 != 0)
                     rb_2.IsChecked = true;
-                if (rb_3.IsChecked.Value && unallocated.x1 != 0)
+                if (rb_3.IsChecked.Value && uaShips.x1 != 0)
                     rb_1.IsChecked = true;
             }
-            tb_ship4.Text = unallocated.x4.ToString();
-            if (unallocated.x4 == 0)
+            tb_ship4.Text = uaShips.x4.ToString();
+            if (uaShips.x4 == 0)
             {
                 rb_4.IsEnabled = false;
-                if (rb_4.IsChecked.Value && unallocated.x3 != 0)
+                if (rb_4.IsChecked.Value && uaShips.x3 != 0)
                     rb_3.IsChecked = true;
-                if (rb_4.IsChecked.Value && unallocated.x2 != 0)
+                if (rb_4.IsChecked.Value && uaShips.x2 != 0)
                     rb_2.IsChecked = true;
-                if (rb_4.IsChecked.Value && unallocated.x1 != 0)
+                if (rb_4.IsChecked.Value && uaShips.x1 != 0)
                     rb_1.IsChecked = true;
             }
         }
@@ -268,19 +291,33 @@ namespace Battleships
         private void DecUnallocated()
         {
             if (ShipSize == 4)
-                unallocated.x4--;
+                uaShips.x4--;
             if (ShipSize == 3)
-                unallocated.x3--;
+                uaShips.x3--;
             if (ShipSize == 2)
-                unallocated.x2--;
+                uaShips.x2--;
             if (ShipSize == 1)
-                unallocated.x1--;
+                uaShips.x1--;
             FillUnallocatedShip();
 
-            if (unallocated.x1 + unallocated.x2 + unallocated.x3 + unallocated.x4 == 0)
+            if (uaShips.x1 + uaShips.x2 + uaShips.x3 + uaShips.x4 == 0)
                 gameStage = GameStage.Battle;
         }
 
+        private void Bt_goBattle_Click(object sender, RoutedEventArgs e)
+        {
+            gameStage = GameStage.Battle;
+        }
+
+        private void Bt_ClearField_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (Ship ship in myShips)
+                ship.Clear();
+            myShips.Clear();
+            uaShips.Clear();
+            FillUnallocatedShip();
+        }
+       
         //todo добавить обработчик начала новной игры
         private void Tb_statusbar_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -300,13 +337,6 @@ namespace Battleships
             if (tb_statusbar.Text == "/No")
                 MessageBox.Show(this, "Противник не принял наш вызов. Засчитываем это как техническое поражение!", "Противник струсил", MessageBoxButton.OK);
         }
-        ~MainWindow()
-        {
-            if (mynet.IsServerActive)
-                mynet.StopServer();
-
-        }
-
 
         private void FillField()
         {
@@ -319,8 +349,8 @@ namespace Battleships
                     b.Name = "btn" + row + col;
                     b.Focusable = false;
 
-                    compButtons[row * 10 + col] = b;
-                    b.Click += new RoutedEventHandler(this.buttonGrid_Click);
+                    myButtons[row * 10 + col] = b;
+                    b.Click += new RoutedEventHandler(this.CellClick);
                     Grid.SetColumn(b, col);
                     Grid.SetRow(b, row);
                     gr_myField.Children.Add(b);
@@ -338,68 +368,89 @@ namespace Battleships
             }
         }
 
-        private void buttonGrid_Click(object sender, RoutedEventArgs e)
+        private void ArrangeShips(Cell cell)
         {
-            if (gameStage==GameStage.ArrangingShips)
+            if (cell.IsFree && ValidPositioned(cell)) //если ячейка не занята проверяем можно ли расположить карабль заданного размера
             {
-                Cell cell = (Cell)sender;
-                if (cell.IsFree && ValidPositioned(cell)) //если ячейка не занята проверяем можно ли расположить карабль заданного размера
+
+                cell.IsDesk = true;
+                if (curShip.Count == 0)
                 {
-
-                    cell.IsDesk = true;
-                    if (curShip.Count == 0)
+                    curShip.Add(cell);
+                    if (shipSize == 1)
                     {
-                        curShip.Add(cell);
-                        if (shipSize == 1)
-                        {
-                            Ship newShip = new Ship();
-                            newShip.SetDesk(cell);
-                            curShip.Clear();
-                            myShips.Add(newShip);
-                            DecUnallocated();
-                        }
-                    }
-                    else
-                    {
-                        int row_, col_;
-                        //вычисляем координаты предыдущей точки
-                        row_ = (int)Char.GetNumericValue(curShip[0].Name[3]);
-                        col_ = (int)Char.GetNumericValue(curShip[0].Name[4]);
-
-                        int row, col;
-                        //вычисляем координаты текущей точки
-                        row = (int)Char.GetNumericValue(cell.Name[3]);
-                        col = (int)Char.GetNumericValue(cell.Name[4]);
-
                         Ship newShip = new Ship();
-                        if (row_ == row && col_ > col)
-                        {
-                            for (int i = col_ - (ShipSize - 1); i < col_; i++)
-                                newShip.SetDesk(compButtons[row * 10 + i]);
-                        }
-
-                        if (row_ == row && col_ < col)
-                        {
-                            for (int i = col_ + 1; i <= col_ + (ShipSize - 1); i++)
-                                newShip.SetDesk(compButtons[row * 10 + i]);
-                        }
-
-                        if (col_ == col && row_ > row)
-                        {
-                            for (int i = row_ - (ShipSize - 1); i < row_; i++)
-                                newShip.SetDesk(compButtons[i * 10 + col]);
-                        }
-
-                        if (col_ == col && row_ < row)
-                        {
-                            for (int i = row_ + 1; i <= row_ + (ShipSize - 1); i++)
-                                newShip.SetDesk(compButtons[i * 10 + col]);
-                        }
+                        newShip.SetDesk(cell);
                         curShip.Clear();
                         myShips.Add(newShip);
                         DecUnallocated();
                     }
                 }
+                else
+                {
+                    int row_, col_;
+                    //вычисляем координаты предыдущей точки
+                    row_ = (int)Char.GetNumericValue(curShip[0].Name[3]);
+                    col_ = (int)Char.GetNumericValue(curShip[0].Name[4]);
+
+                    int row, col;
+                    //вычисляем координаты текущей точки
+                    row = (int)Char.GetNumericValue(cell.Name[3]);
+                    col = (int)Char.GetNumericValue(cell.Name[4]);
+
+                    Ship newShip = new Ship();
+                    if (row_ == row && col_ > col)
+                    {
+                        for (int i = col_ - (ShipSize - 1); i <= col_; i++)
+                            newShip.SetDesk(myButtons[row * 10 + i]);
+                    }
+
+                    if (row_ == row && col_ < col)
+                    {
+                        for (int i = col_; i <= col_ + (ShipSize - 1); i++)
+                            newShip.SetDesk(myButtons[row * 10 + i]);
+                    }
+
+                    if (col_ == col && row_ > row)
+                    {
+                        for (int i = row_ - (ShipSize - 1); i <= row_; i++)
+                            newShip.SetDesk(myButtons[i * 10 + col]);
+                    }
+
+                    if (col_ == col && row_ < row)
+                    {
+                        for (int i = row_; i <= row_ + (ShipSize - 1); i++)
+                            newShip.SetDesk(myButtons[i * 10 + col]);
+                    }
+                    curShip.Clear();
+                    myShips.Add(newShip);
+                    DecUnallocated();
+                }
+            }
+        }
+
+        private void CellClick(object sender, RoutedEventArgs e)
+        {
+            switch(gameStage)
+            {
+                case GameStage.ArrangingShips:
+                    {
+                        Cell cell = (Cell)sender;
+                        ArrangeShips(cell);
+                        break;
+                    }
+                case GameStage.Battle:
+                    {
+                        break;
+                    }
+                case GameStage.Finished:
+                    {
+                        break;
+                    }
+                case GameStage.NotStarted:
+                    {
+                        break;
+                    }
             }
 
         }
@@ -426,8 +477,8 @@ namespace Battleships
                 left = true;
                 for (int i = col - (ShipSize - 1); i < col; i++)
                 {
-                    left = left && compButtons[row * 10 + i].IsFree;
-                    if (!RadiusFree(compButtons[row * 10 + i]))
+                    left = left && myButtons[row * 10 + i].IsFree;
+                    if (!RadiusFree(myButtons[row * 10 + i]))
                     {
                         left = false;
                         break;
@@ -442,8 +493,8 @@ namespace Battleships
                 right = true;
                 for (int i = col + 1; i <= col + (ShipSize - 1); i++)
                 {
-                    right = right && compButtons[row * 10 + i].IsFree;
-                    if (!RadiusFree(compButtons[row * 10 + i]))
+                    right = right && myButtons[row * 10 + i].IsFree;
+                    if (!RadiusFree(myButtons[row * 10 + i]))
                     {
                         right = false;
                         break;
@@ -458,8 +509,8 @@ namespace Battleships
                 up = true;
                 for (int i = row - (ShipSize - 1); i < row; i++)
                 {
-                    up = up && compButtons[i * 10 + col].IsFree;
-                    if (!RadiusFree(compButtons[i * 10 + col]))
+                    up = up && myButtons[i * 10 + col].IsFree;
+                    if (!RadiusFree(myButtons[i * 10 + col]))
                     {
                         up = false;
                         break;
@@ -474,8 +525,8 @@ namespace Battleships
                 down = true;
                 for (int i = row + 1; i <= row + (ShipSize - 1); i++)
                 {
-                    down = down && compButtons[i * 10 + col].IsFree;
-                    if (!RadiusFree(compButtons[i * 10 + col]))
+                    down = down && myButtons[i * 10 + col].IsFree;
+                    if (!RadiusFree(myButtons[i * 10 + col]))
                     {
                         down = false;
                         break;
@@ -522,7 +573,7 @@ namespace Battleships
             {
                 for (int j = (col - 1 >= 0) ? (col - 1) : col; j <= ((col + 1 > 9) ? col : (col + 1)); j++)
                 {
-                    if (compButtons[i * 10 + j] != prevCell && compButtons[i * 10 + j].IsDesk)
+                    if (myButtons[i * 10 + j] != prevCell && myButtons[i * 10 + j].IsDesk)
                         return false;
                 }
             }
@@ -534,24 +585,38 @@ namespace Battleships
             ShipSize = 4;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
+            curShip.Clear();
         }
         private void Set3(object sender, RoutedEventArgs e)
         {
             ShipSize = 3;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
+            curShip.Clear();
         }
         private void Set2(object sender, RoutedEventArgs e)
         {
             ShipSize = 2;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
+            curShip.Clear();
         }
         private void Set1(object sender, RoutedEventArgs e)
         {
             ShipSize = 1;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
+            curShip.Clear();
         }
+
+
+        ~MainWindow()
+        {
+            if (mynet.IsServerActive)
+                mynet.StopServer();
+
+        }
+
+      
     }
 }
