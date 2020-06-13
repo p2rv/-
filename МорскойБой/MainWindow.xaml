@@ -33,7 +33,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
                 <RowDefinition/>
-                <RowDefinition Height="40"/>
+                
             </Grid.RowDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
                 <Label x:Name="lb_player1"  FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Мое поле</Label>
@@ -144,32 +144,32 @@
                 </Grid>
                 <GroupBox Header="Панель управления">
                     <StackPanel Orientation="Vertical">
-                        <GroupBox x:Name="gb_ArrangeShips" Header="Разместите следующие корабли">
-                            <Grid>
+                        <GroupBox x:Name="gb_ArrangeShips" Header="Разместите следующие корабли" IsEnabled="False">
+                            <Grid Height="100">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="10"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
-                                    <RowDefinition/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition Height="20"/>
+                                    <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" x:Name="tb_ship4" Text="1"/>
-                                <TextBlock Grid.Row="1" x:Name="tb_ship3" Text="2"/>
-                                <TextBlock Grid.Row="2" x:Name="tb_ship2" Text="3"/>
-                                <TextBlock Grid.Row="3" x:Name="tb_ship1" Text="4"/>
-                                <RadioButton Grid.Column="1" Grid.Row="0" x:Name="rb_4" GroupName="Ship" Content="четырёхпалубный" IsChecked="True" Checked="Set4" />
-                                <RadioButton Grid.Column="1" Grid.Row="1" x:Name="rb_3" GroupName="Ship" Content="трёхпалубный" IsChecked="False"  Checked="Set3"/>
-                                <RadioButton Grid.Column="1" Grid.Row="2" x:Name="rb_2" GroupName="Ship" Content="двухпалубный" IsChecked="False" Checked="Set2"/>
-                                <RadioButton Grid.Column="1" Grid.Row="3" x:Name="rb_1" GroupName="Ship" Content="однопалубный" IsChecked="False"  Checked="Set1"/>
-                                <Button Grid.Column="1" Grid.Row="4" Margin="20,0,0,0" x:Name="bt_ClearField" Click="Bt_ClearField_Click" >Очистить поле</Button>
+                                <TextBlock Grid.Row="0" x:Name="tb_ship4" Text="1" Margin="0,0,0,15" Grid.RowSpan="2"/>
+                                <TextBlock Grid.Row="1" x:Name="tb_ship3" Text="2" Margin="0,0,0,15" Grid.RowSpan="2"/>
+                                <TextBlock Grid.Row="2" x:Name="tb_ship2" Text="3" Margin="0,0,0,15" Grid.RowSpan="2"/>
+                                <TextBlock Grid.Row="3" x:Name="tb_ship1" Text="4" Margin="0,0,0,15" Grid.RowSpan="2"/>
+                                <RadioButton Grid.Column="1" Grid.Row="0" x:Name="rb_4" GroupName="Ship" Content="четырёхпалубный" IsChecked="True"  Checked="Set4" Grid.ColumnSpan="2" />
+                                <RadioButton Grid.Column="1" Grid.Row="1" x:Name="rb_3" GroupName="Ship" Content="трёхпалубный   " IsChecked="False" Checked="Set3" Grid.ColumnSpan="2"/>
+                                <RadioButton Grid.Column="1" Grid.Row="2" x:Name="rb_2" GroupName="Ship" Content="двухпалубны    " IsChecked="False" Checked="Set2" Grid.ColumnSpan="2"/>
+                                <RadioButton Grid.Column="1" Grid.Row="3" x:Name="rb_1" GroupName="Ship" Content="однопалубный   " IsChecked="False" Checked="Set1" Grid.ColumnSpan="2"/>
+                                <Button Grid.Column="1" Grid.Row="4" Margin="20,0,0,0" x:Name="bt_ClearField" Click="Bt_ClearField_Click" Grid.ColumnSpan="2" >Очистить поле</Button>
                             </Grid>
                         </GroupBox>
                         <StackPanel Orientation="Horizontal">
-                            
+
                         </StackPanel>
                     </StackPanel>
                 </GroupBox>

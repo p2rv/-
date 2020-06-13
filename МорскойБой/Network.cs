@@ -267,15 +267,15 @@ namespace Battleships
                     string strMessage = Encoding.Unicode.GetString(inf);
                     
                     //выполняем полученную команду
-                    if (strMessage.Substring(0, 9) == "/go_batle")
+                    if (strMessage.Substring(0, 9) == "/go_battle")
                     {
-                        string newUsername = strMessage.Replace("/go_batle ", "").Trim('\0');
+                        string newUsername = strMessage.Replace("/go_battle ", "").Trim('\0');
                         SendMessage("/my_name " + myName);
 
                         this.dispatcher.Invoke(new Action(() =>
                         {
                             PlayerName = newUsername;
-                            State = "/go_batle";
+                            State = "/go_battle";
                         }), null);
 
                     }
@@ -303,6 +303,29 @@ namespace Battleships
                         }), null);
                         KillSocket(client.Socket);
                         client.Socket = null;
+                    }
+                    if (strMessage.Substring(0, 7) == "/Battle")
+                    {
+                        this.dispatcher.Invoke(new Action(() =>
+                        {
+                            State = "/Battle";
+                        }), null);
+                    }
+                    if (strMessage.Substring(0, 4) == "/hit")
+                    {
+                        string xy = strMessage.Replace("/hit", "").Trim('\0');
+                        this.dispatcher.Invoke(new Action(() =>
+                        {
+                            State = "/hit"+xy;
+                        }), null);
+                    }
+                    if (strMessage.Substring(0, 14) == "/AttackResult ")
+                    {
+                        string AttackResult = strMessage.Replace("/AttackResult ", "").Trim('\0');
+                        this.dispatcher.Invoke(new Action(() =>
+                        {
+                            State = "/AttackResult" + AttackResult;
+                        }), null);
                     }
 
                 }
@@ -341,7 +364,7 @@ namespace Battleships
                 ipEndPoint = new IPEndPoint(ip, port);
                 client.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 client.Socket.Connect(ipEndPoint);
-                SendMessage("/go_batle " + MyName);
+                SendMessage("/go_battle " + MyName);
                 IsClientConnected = true;
                 State = "Сonnected. Awaiting confirmation";
                 GetMessage(client); //получаем имя соперника
