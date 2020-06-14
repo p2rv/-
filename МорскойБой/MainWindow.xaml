@@ -37,7 +37,7 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
                 <Label x:Name="lb_player1"  FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center">Мое поле</Label>
-                <TextBox x:Name="tb_player1" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding MyName}" Width="160"/>
+                <TextBox x:Name="tb_player1" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding MyName}" Width="160" TextChanged="Tb_player1_TextChanged"/>
             </StackPanel>
             <GridSplitter Grid.Column="1" ShowsPreview="False" Width="3" HorizontalAlignment="Center" VerticalAlignment="Stretch" Grid.RowSpan="3"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">

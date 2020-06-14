@@ -461,7 +461,7 @@ namespace Battleships
                 else
                     gameStage = GameStage.Battle;
             }
-            if (tb_statusbar.Text.Substring(0, 4) == "/hit")
+            if (tb_statusbar.Text.Length>=4 && tb_statusbar.Text.Substring(0, 4) == "/hit")
             {
                 string xy = tb_statusbar.Text.Replace("/hit", "");
                 int row, col;
@@ -492,7 +492,7 @@ namespace Battleships
                     turn = WhoseTurn.My;
 
             }
-            if (tb_statusbar.Text.Substring(0, 14) =="/AttackResult ")
+            if (tb_statusbar.Text.Length >= 14 && tb_statusbar.Text.Substring(0, 14) =="/AttackResult ")
             {
                 int result = Convert.ToInt32(tb_statusbar.Text.Replace("/AttackResult ", ""));
                 AttackResult attack = (AttackResult)result;
@@ -708,8 +708,8 @@ namespace Battleships
                     {
                         if(turn==WhoseTurn.My)
                         {
-                            Cell cell = (Cell)sender;
-                            AttackCell(cell);
+                            lastCell = (Cell)sender;
+                            AttackCell(lastCell);
                         }
                         break;
                     }
@@ -887,6 +887,9 @@ namespace Battleships
 
         }
 
-      
+        private void Tb_player1_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            Player1_name = tb_player1.Text;
+        }
     }
 }
