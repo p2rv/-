@@ -117,6 +117,7 @@ namespace Battleships
             _cell.IsDesk = true;
             shipCell.Add(_cell);
         }
+      
         
         public int Size
         {
@@ -141,6 +142,12 @@ namespace Battleships
                 return ShipState.Sunk;
             }
         }
+        public void UpdateState()
+        {
+            if(State==ShipState.Sunk)
+                foreach (Cell cell in shipCell)
+                    cell.Background = Brushes.DarkRed;
+        }
 
         public AttackResult Attack(Cell _attackedCell)
         {
@@ -164,6 +171,16 @@ namespace Battleships
         {
             foreach (Cell cell in shipCell)
                 cell.IsDesk = false;
+        }
+
+        public override string ToString()
+        {
+            string coordinates = "";
+
+            foreach (Cell cell in shipCell)
+                coordinates += cell.Name.Substring(3) + ";";
+
+            return coordinates;
         }
 
     }
@@ -291,7 +308,6 @@ namespace Battleships
                 mynet.SetIP(ng.IP);
                 Player1_name = ng.PlayerName;
                 mynet.CreateConnect();
-                mynet.WaitMessage();
             }
             else
                 tb_statusbar.Text = "Отмена создания новой сетевой игры";
@@ -422,7 +438,20 @@ namespace Battleships
             myShips.Clear();
             uaShips.Clear();
         }
-       
+
+        private Ship AddShip(string coordinates)
+        {
+            Ship newShip=new Ship();
+            int x, y;
+            string[] coordinate = coordinates.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string xy in coordinate)
+            {
+                x = (int)Char.GetNumericValue(xy[0]);
+                y = (int)Char.GetNumericValue(xy[1]);
+                newShip.SetDesk(enemyButtons[x * 10 + y]);
+            }
+            return newShip;
+        }
         //todo добавить обработчик начала новной игры
         private void Tb_statusbar_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -457,9 +486,16 @@ namespace Battleships
             if (tb_statusbar.Text == "/Battle")
             {
                 if (Turn == WhoseTurn.None)
+                {
                     Turn = WhoseTurn.Enemy;
+                    tb_statusbar.Text = "Противник уже раставил корабли ";
+                }
                 else
+                {
                     gameStage = GameStage.Battle;
+                    Turn = WhoseTurn.My;
+                    tb_statusbar.Text = "Противник раставил корабли, Ваш ход!";
+                }
             }
             if (tb_statusbar.Text.Length>=4 && tb_statusbar.Text.Substring(0, 4) == "/hit")
             {
@@ -469,7 +505,9 @@ namespace Battleships
                 row = (int)Char.GetNumericValue(xy[0]);
                 col = (int)Char.GetNumericValue(xy[1]);
                 Cell cell = myButtons[row * 10 + col];
+                cell.IsDamage = true;
                 AttackResult attack=AttackResult.None;
+                Ship destroyedShip = null;
                 foreach (Ship ship in myShips)
                 {
                     attack = ship.Attack(cell);
@@ -477,37 +515,49 @@ namespace Battleships
                     {
                         if (attack == AttackResult.Destroy)
                         {
+                            destroyedShip = ship;
                             if (AllShipSunk())
                             {
                                 attack = AttackResult.Win;
                                 gameStage = GameStage.Finished;
-                                MessageBox.Show("You are lose!","Поражение");
+                                MessageBox.Show("You are lose!", "Поражение");
                             }
-                            break;
                         }
+                        break;
                     }
                 }
-                mynet.SendMessage("/AttackResult " + attack.ToString());
-                if (attack != AttackResult.Miss)
-                    turn = WhoseTurn.My;
+                if (attack == AttackResult.Destroy)
+                    mynet.SendMessage("/AttackResult " + ((int)attack).ToString() + "/" + destroyedShip.ToString());
+                else
+                    mynet.SendMessage("/AttackResult " + ((int)attack).ToString());
+
+                if (attack == AttackResult.Miss)
+                    Turn = WhoseTurn.My;
 
             }
             if (tb_statusbar.Text.Length >= 14 && tb_statusbar.Text.Substring(0, 14) =="/AttackResult ")
             {
-                int result = Convert.ToInt32(tb_statusbar.Text.Replace("/AttackResult ", ""));
+
+                int result = Convert.ToInt32(tb_statusbar.Text.Substring(14,1));
                 AttackResult attack = (AttackResult)result;
                 switch(attack)
                 {
                     case AttackResult.Miss:
-                        turn = WhoseTurn.Enemy;
+                        lastCell.IsDamage = true;
+                        Turn = WhoseTurn.Enemy;
                         break;
                     case AttackResult.Hit:
                         lastCell.IsDesk = true;
                         lastCell.IsDamage = true;
+                        Turn = WhoseTurn.My;
                         break;
                     case AttackResult.Destroy:
                         lastCell.IsDesk = true;
                         lastCell.IsDamage = true;
+                        Turn = WhoseTurn.My;
+                        string coordinates = tb_statusbar.Text.Substring(16);
+                        Ship destroyedShip = AddShip(coordinates);
+                        destroyedShip.UpdateState();
                         break;
                     case AttackResult.Win:
                         gameStage = GameStage.Finished;
@@ -534,7 +584,7 @@ namespace Battleships
             {
                 if (turn != value)
                     turn = value;
-                if (turn == WhoseTurn.My)
+                if (turn == WhoseTurn.My && gameStage == GameStage.Battle)
                     gr_enemyField.IsEnabled = true;
                 else
                     gr_enemyField.IsEnabled = false;
