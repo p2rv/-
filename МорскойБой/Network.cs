@@ -47,11 +47,8 @@ namespace Battleships
             get { return status; }
             set
             {
-                if (value != status)
-                {
-                    status = value;
-                    OnPropertyChanged("State");
-                }
+                status = value;
+                OnPropertyChanged("State");
             }
 
         }

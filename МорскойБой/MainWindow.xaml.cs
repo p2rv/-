@@ -480,9 +480,13 @@ namespace Battleships
                 gb_ArrangeShips.IsEnabled = true;
                 uaShips.Clear();
                 rb_4.IsChecked = true;
+                tb_statusbar.Text = "Противник принял наш вызов";
             }
             if (tb_statusbar.Text == "/No")
+            {
                 MessageBox.Show(this, "Противник не принял наш вызов. Засчитываем это как техническое поражение!", "Противник струсил", MessageBoxButton.OK);
+                tb_statusbar.Text = "Противник не принял наш вызов";
+            }
             if (tb_statusbar.Text == "/Battle")
             {
                 if (Turn == WhoseTurn.None)
@@ -517,11 +521,7 @@ namespace Battleships
                         {
                             destroyedShip = ship;
                             if (AllShipSunk())
-                            {
                                 attack = AttackResult.Win;
-                                gameStage = GameStage.Finished;
-                                MessageBox.Show("You are lose!", "Поражение");
-                            }
                         }
                         break;
                     }
@@ -534,6 +534,23 @@ namespace Battleships
                 if (attack == AttackResult.Miss)
                     Turn = WhoseTurn.My;
 
+                switch(attack)
+                {
+                    case AttackResult.Miss:
+                        tb_statusbar.Text = "Противник промахнулся, наш ход!)))";
+                        break;
+                    case AttackResult.Hit:
+                        tb_statusbar.Text = "В нас попали!(";
+                        break;
+                    case AttackResult.Destroy:
+                        tb_statusbar.Text = "Наш корабль затоплен!((";
+                        break;
+                    case AttackResult.Win:
+                        tb_statusbar.Text = "Мы проиграли!(((";
+                        gameStage = GameStage.Finished;
+                        MessageBox.Show("You are lose!", "Поражение");
+                        break;
+                }
             }
             if (tb_statusbar.Text.Length >= 14 && tb_statusbar.Text.Substring(0, 14) =="/AttackResult ")
             {
@@ -545,11 +562,13 @@ namespace Battleships
                     case AttackResult.Miss:
                         lastCell.IsDamage = true;
                         Turn = WhoseTurn.Enemy;
+                        tb_statusbar.Text = "Промах, ход переходит к противнику";
                         break;
                     case AttackResult.Hit:
                         lastCell.IsDesk = true;
                         lastCell.IsDamage = true;
                         Turn = WhoseTurn.My;
+                        tb_statusbar.Text = "Есть попадание";
                         break;
                     case AttackResult.Destroy:
                         lastCell.IsDesk = true;
@@ -557,11 +576,14 @@ namespace Battleships
                         Turn = WhoseTurn.My;
                         string coordinates = tb_statusbar.Text.Substring(16);
                         Ship destroyedShip = AddShip(coordinates);
+                        enemyShips.Add(destroyedShip);
                         destroyedShip.UpdateState();
+                        tb_statusbar.Text = "Затопил";
                         break;
                     case AttackResult.Win:
                         gameStage = GameStage.Finished;
                         MessageBox.Show("You are win!", "Победа");
+                        tb_statusbar.Text = "Победа";
                         break;
                 }
 
