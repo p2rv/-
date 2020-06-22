@@ -17,7 +17,7 @@
             </MenuItem>
 
             <MenuItem Header="Help" >
-                <MenuItem Header="Правила игры"></MenuItem>
+                <MenuItem Header="Правила игры" Click="Help_Click"></MenuItem>
                 <MenuItem Header="О программе"></MenuItem>
             </MenuItem>
         </Menu>
