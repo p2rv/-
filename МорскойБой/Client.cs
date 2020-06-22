@@ -58,6 +58,7 @@ namespace Battleships
 
         #region IDisposable implementation
         private bool _isDisposed = false;
+
         public void Dispose()
         {
             if (!_isDisposed)
@@ -65,7 +66,7 @@ namespace Battleships
                 if (this.Socket != null)
                 {
                     this.Socket.Shutdown(SocketShutdown.Both);
-                    this.Socket.Dispose();
+                    this.Socket.Close();
                     this.Socket = null;
                 }
                 if (this.Thread != null)

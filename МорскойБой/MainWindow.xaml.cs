@@ -18,11 +18,6 @@ using System.Net.Sockets;
 namespace Battleships
 {
 
-    public enum GameResult
-    {
-        Win,
-        Loss
-    }
 
     public enum AttackResult
     {
@@ -30,8 +25,7 @@ namespace Battleships
         Miss,
         Hit,
         Destroy,
-        Win,
-        Loss
+        Win
     }
 
     public enum GameStage
@@ -112,13 +106,12 @@ namespace Battleships
     {
         private List<Cell> shipCell=new List<Cell>();
 
-        public void SetDesk(Cell _cell)
+        public void AddDesk(Cell _cell)
         {
             _cell.IsDesk = true;
             shipCell.Add(_cell);
         }
       
-        
         public int Size
         {
             get { return shipCell.Count; }
@@ -142,6 +135,7 @@ namespace Battleships
                 return ShipState.Sunk;
             }
         }
+
         public void UpdateState()
         {
             if(State==ShipState.Sunk)
@@ -149,7 +143,7 @@ namespace Battleships
                     cell.Background = Brushes.DarkRed;
         }
 
-        public AttackResult Attack(Cell _attackedCell)
+        public AttackResult AttackHandler(Cell _attackedCell)
         {
             if (shipCell.Contains(_attackedCell))
             {
@@ -165,12 +159,13 @@ namespace Battleships
                 }
             }
             return AttackResult.Miss;
-        }
+         }
 
         public void Clear()
         {
             foreach (Cell cell in shipCell)
                 cell.IsDesk = false;
+            shipCell.Clear();
         }
 
         public override string ToString()
@@ -192,6 +187,8 @@ namespace Battleships
         private int x2;
         private int x1;
 
+        public event EventHandler ValueChanged;
+
         public Unallocated()
         {
             x4 = 1;
@@ -210,7 +207,6 @@ namespace Battleships
                 ValueChanged(this, EventArgs.Empty);
         }
 
-        public event EventHandler ValueChanged;
         public int X4
         {
             get { return x4; }
@@ -267,9 +263,42 @@ namespace Battleships
 
     public partial class MainWindow : Window
     {
-        private GameStage gameStage; //TODO сделать изменение через свойство, в свойстве активировать кнопки. Также добавить событие изменение состояния 
+        private GameStage gStage;
+        public  GameStage GStage
+        {
+            get { return gStage; }
+            set
+            {
+                switch (value)
+                {
+                    case GameStage.Finished:
+                        mynet.StopConnection();
+                        GStage = GameStage.NotStarted;
+                        return;
+                    case GameStage.NotStarted:
+                        InitializeGame();
+                        break;
+                }
+                gStage = value;
+            }
+        }
+        private void InitializeGame()
+        {
+            tb_player2.Text = "";
+            myButtons    = new Cell[100];
+            enemyButtons = new Cell[100];
+            myShips      = new List<Ship>();
+            enemyShips   = new List<Ship>();
+            uaShips      = new Unallocated();
+            curShip = new List<Cell>(0);
+            Turn = WhoseTurn.None;
+            ClearField();
+            FillField();
+            uaShips.ValueChanged += UnallocatedChanged;
+        }
+
         private WhoseTurn turn;
-        private AttackResult attack;
+        //private AttackResult attack;
         private Network mynet;
         private string player1_name;    //ваше имя 
 
@@ -280,22 +309,19 @@ namespace Battleships
         private Unallocated uaShips   = new Unallocated();
         private Cell lastCell;
 
-        private int shipSize;
         private List<Cell> curShip = new List<Cell>(0);
 
         public MainWindow()
         {
 
             InitializeComponent();
-            FillField();
+            GStage = GameStage.NotStarted;
 
             mynet = new Network();
             this.DataContext = mynet;
             Player1_name = "loser006";
             mynet.StartServer();
-
-            Turn = WhoseTurn.None;
-            uaShips.ValueChanged += UnallocatedChanged;
+            
         }
 
         
@@ -307,7 +333,7 @@ namespace Battleships
             {
                 mynet.SetIP(ng.IP);
                 Player1_name = ng.PlayerName;
-                mynet.CreateConnect();
+                mynet.StartConnection();
             }
             else
                 tb_statusbar.Text = "Отмена создания новой сетевой игры";
@@ -411,14 +437,14 @@ namespace Battleships
                         {
                             Turn = WhoseTurn.My;
                             mynet.SendMessage("/Battle");
-                            gameStage = GameStage.Battle_wait;
+                            GStage = GameStage.Battle_wait;
                             break;
                         }
                     case WhoseTurn.Enemy:
                         {
                             Turn = WhoseTurn.Enemy;
                             mynet.SendMessage("/Battle");
-                            gameStage = GameStage.Battle;
+                            GStage = GameStage.Battle;
                             break;
                         }
                 }
@@ -428,7 +454,7 @@ namespace Battleships
 
         private void Bt_goBattle_Click(object sender, RoutedEventArgs e)
         {
-            gameStage = GameStage.Battle;
+            GStage = GameStage.Battle;
         }
 
         private void Bt_ClearField_Click(object sender, RoutedEventArgs e)
@@ -448,12 +474,97 @@ namespace Battleships
             {
                 x = (int)Char.GetNumericValue(xy[0]);
                 y = (int)Char.GetNumericValue(xy[1]);
-                newShip.SetDesk(enemyButtons[x * 10 + y]);
+                newShip.AddDesk(enemyButtons[x * 10 + y]);
             }
             return newShip;
         }
+      
+        private void Hit_Handler(int row, int col)
+        {
+            
+            Cell cell = myButtons[row * 10 + col];
+            cell.IsDamage = true;
+            AttackResult attack = AttackResult.None;
+            Ship destroyedShip = null;
+            foreach (Ship ship in myShips)
+            {
+                attack = ship.AttackHandler(cell);
+                if (attack > AttackResult.Miss)
+                {
+                    if (attack == AttackResult.Destroy)
+                    {
+                        destroyedShip = ship;
+                        if (AllShipSunk())
+                            attack = AttackResult.Win;
+                    }
+                    break;
+                }
+            }
+            if (attack == AttackResult.Destroy)
+                mynet.SendMessage("/AttackResult " + ((int)attack).ToString() + "/" + destroyedShip.ToString());
+            else
+                mynet.SendMessage("/AttackResult " + ((int)attack).ToString());
+
+            //Если противник промахнулся ход переходит к игроку
+            if (attack == AttackResult.Miss)
+                Turn = WhoseTurn.My;
+
+            switch (attack)
+            {
+                case AttackResult.Miss:
+                    tb_statusbar.Text = "Противник промахнулся, наш ход!)))";
+                    break;
+                case AttackResult.Hit:
+                    tb_statusbar.Text = "В нас попали!(";
+                    break;
+                case AttackResult.Destroy:
+                    tb_statusbar.Text = "Наш корабль затоплен!((";
+                    break;
+                case AttackResult.Win:
+                    tb_statusbar.Text = "Мы проиграли!(((";
+                    GStage = GameStage.Finished;
+                    MessageBox.Show("You are lose!", "Поражение");
+                    break;
+            }
+        }
+
+        private void Attack_Handler(int _attack)
+        {
+            AttackResult attack = (AttackResult)_attack;
+            switch (attack)
+            {
+                case AttackResult.Miss:
+                    lastCell.IsDamage = true;
+                    Turn = WhoseTurn.Enemy;
+                    tb_statusbar.Text = "Промах, ход переходит к противнику";
+                    break;
+                case AttackResult.Hit:
+                    lastCell.IsDesk = true;
+                    lastCell.IsDamage = true;
+                    Turn = WhoseTurn.My;
+                    tb_statusbar.Text = "Есть попадание";
+                    break;
+                case AttackResult.Destroy:
+                    lastCell.IsDesk = true;
+                    lastCell.IsDamage = true;
+                    Turn = WhoseTurn.My;
+                    string coordinates = tb_statusbar.Text.Substring(16);
+                    Ship destroyedShip = AddShip(coordinates);
+                    enemyShips.Add(destroyedShip);
+                    destroyedShip.UpdateState();
+                    tb_statusbar.Text = "Затопил";
+                    break;
+                case AttackResult.Win:
+                    GStage = GameStage.Finished;
+                    tb_statusbar.Text = "Победа";
+                    MessageBox.Show("You are win!", "Победа");
+                    tb_statusbar.Text = "";
+                    break;
+            }
+        }
+
         //todo добавить обработчик начала новной игры
-        private void Tb_statusbar_TextChanged(object sender, TextChangedEventArgs e)
+        private void StatusChanged_Handler(object sender, TextChangedEventArgs e)
         {
             if(tb_statusbar.Text == "/go_battle")
             {
@@ -461,8 +572,8 @@ namespace Battleships
                 if (result == MessageBoxResult.Yes)
                 {
                     mynet.SendMessage("/Yes");
+                    GStage = GameStage.ArrangingShips;
                     MessageBox.Show(this, "Теперь необходимо расставить карабли по карте. Если вы забыли правила игры загляните в раздел справки", "В бойййй!", MessageBoxButton.OK);
-                    gameStage = GameStage.ArrangingShips;
                     gb_ArrangeShips.IsEnabled = true;
                     uaShips.Clear();
                     rb_4.IsChecked = true;
@@ -476,7 +587,7 @@ namespace Battleships
             if (tb_statusbar.Text == "/Yes")
             {
                 MessageBox.Show(this, "Противник принял наш вызов. Теперь необходимо расставить карабли по карте. Если вы забыли правила игры загляните в раздел справки", "В бойййй!", MessageBoxButton.OK);
-                gameStage = GameStage.ArrangingShips;
+                GStage = GameStage.ArrangingShips;
                 gb_ArrangeShips.IsEnabled = true;
                 uaShips.Clear();
                 rb_4.IsChecked = true;
@@ -492,13 +603,13 @@ namespace Battleships
                 if (Turn == WhoseTurn.None)
                 {
                     Turn = WhoseTurn.Enemy;
-                    tb_statusbar.Text = "Противник уже раставил корабли ";
+                    tb_statusbar.Text = "Противник уже расставил корабли ";
                 }
                 else
                 {
-                    gameStage = GameStage.Battle;
+                    GStage = GameStage.Battle;
                     Turn = WhoseTurn.My;
-                    tb_statusbar.Text = "Противник раставил корабли, Ваш ход!";
+                    tb_statusbar.Text = "Противник расставил корабли, Ваш ход!";
                 }
             }
             if (tb_statusbar.Text.Length>=4 && tb_statusbar.Text.Substring(0, 4) == "/hit")
@@ -508,89 +619,24 @@ namespace Battleships
                 //вычисляем координаты текущей точки
                 row = (int)Char.GetNumericValue(xy[0]);
                 col = (int)Char.GetNumericValue(xy[1]);
-                Cell cell = myButtons[row * 10 + col];
-                cell.IsDamage = true;
-                AttackResult attack=AttackResult.None;
-                Ship destroyedShip = null;
-                foreach (Ship ship in myShips)
-                {
-                    attack = ship.Attack(cell);
-                    if (attack > AttackResult.Miss)
-                    {
-                        if (attack == AttackResult.Destroy)
-                        {
-                            destroyedShip = ship;
-                            if (AllShipSunk())
-                                attack = AttackResult.Win;
-                        }
-                        break;
-                    }
-                }
-                if (attack == AttackResult.Destroy)
-                    mynet.SendMessage("/AttackResult " + ((int)attack).ToString() + "/" + destroyedShip.ToString());
-                else
-                    mynet.SendMessage("/AttackResult " + ((int)attack).ToString());
-
-                if (attack == AttackResult.Miss)
-                    Turn = WhoseTurn.My;
-
-                switch(attack)
-                {
-                    case AttackResult.Miss:
-                        tb_statusbar.Text = "Противник промахнулся, наш ход!)))";
-                        break;
-                    case AttackResult.Hit:
-                        tb_statusbar.Text = "В нас попали!(";
-                        break;
-                    case AttackResult.Destroy:
-                        tb_statusbar.Text = "Наш корабль затоплен!((";
-                        break;
-                    case AttackResult.Win:
-                        tb_statusbar.Text = "Мы проиграли!(((";
-                        gameStage = GameStage.Finished;
-                        MessageBox.Show("You are lose!", "Поражение");
-                        break;
-                }
+                Hit_Handler(row,col);
             }
             if (tb_statusbar.Text.Length >= 14 && tb_statusbar.Text.Substring(0, 14) =="/AttackResult ")
             {
-
-                int result = Convert.ToInt32(tb_statusbar.Text.Substring(14,1));
-                AttackResult attack = (AttackResult)result;
-                switch(attack)
-                {
-                    case AttackResult.Miss:
-                        lastCell.IsDamage = true;
-                        Turn = WhoseTurn.Enemy;
-                        tb_statusbar.Text = "Промах, ход переходит к противнику";
-                        break;
-                    case AttackResult.Hit:
-                        lastCell.IsDesk = true;
-                        lastCell.IsDamage = true;
-                        Turn = WhoseTurn.My;
-                        tb_statusbar.Text = "Есть попадание";
-                        break;
-                    case AttackResult.Destroy:
-                        lastCell.IsDesk = true;
-                        lastCell.IsDamage = true;
-                        Turn = WhoseTurn.My;
-                        string coordinates = tb_statusbar.Text.Substring(16);
-                        Ship destroyedShip = AddShip(coordinates);
-                        enemyShips.Add(destroyedShip);
-                        destroyedShip.UpdateState();
-                        tb_statusbar.Text = "Затопил";
-                        break;
-                    case AttackResult.Win:
-                        gameStage = GameStage.Finished;
-                        MessageBox.Show("You are win!", "Победа");
-                        tb_statusbar.Text = "Победа";
-                        break;
-                }
+                int attack = Convert.ToInt32(tb_statusbar.Text.Substring(14,1));
+                Attack_Handler(attack);
+            }
+            if(tb_statusbar.Text== "/Disconnect")
+            {
+                MessageBox.Show("Произошел разрыв соединения!", "Disconnected");
+                tb_statusbar.Text = "";
+                mynet.StopConnection();
+                if (mynet.IsServerActive)
+                    tb_statusbar.Text = "Server is active.Wait connection";
+                GStage = GameStage.Finished;
 
             }
-
-
-            }
+        }
 
         private bool AllShipSunk()
         {
@@ -599,6 +645,7 @@ namespace Battleships
                     return false;
             return true;
         }
+
         private WhoseTurn Turn
         {
             get { return turn; }
@@ -606,7 +653,7 @@ namespace Battleships
             {
                 if (turn != value)
                     turn = value;
-                if (turn == WhoseTurn.My && gameStage == GameStage.Battle)
+                if (turn == WhoseTurn.My && GStage == GameStage.Battle)
                     gr_enemyField.IsEnabled = true;
                 else
                     gr_enemyField.IsEnabled = false;
@@ -649,13 +696,24 @@ namespace Battleships
             }
         }
 
+        private void ClearField()
+        {
+            gr_myField.Children.Clear();
+            gr_enemyField.Children.Clear();
+        }
         public int ShipSize
         {
-            get { return shipSize; }
-            set
+            get
             {
-                if (value >= 1 && value <= 4)
-                    shipSize = value;
+                if (rb_1.IsChecked.Value)
+                    return 1;
+                if (rb_2.IsChecked.Value)
+                    return 2;
+                if (rb_3.IsChecked.Value)
+                    return 3;
+                if (rb_4.IsChecked.Value)
+                    return 4;
+                return 0;
             }
         }
 
@@ -669,13 +727,13 @@ namespace Battleships
                 {
                     cell.IsDesk = true;
                     curShip.Add(cell);
-                    if (shipSize == 1)
+                    if (ShipSize == 1)
                     {
                         Ship newShip = new Ship();
-                        newShip.SetDesk(cell);
+                        newShip.AddDesk(cell);
                         curShip.Clear();
                         myShips.Add(newShip);
-                        DecUnallocated();
+                        DecUnallocated(); //уменьшаем количестов неразмещенных кораблей
                     }
                 }
                 else
@@ -694,25 +752,25 @@ namespace Battleships
                     if (row_ == row && col_ > col)
                     {
                         for (int i = col_ - (ShipSize - 1); i <= col_; i++)
-                            newShip.SetDesk(myButtons[row * 10 + i]);
+                            newShip.AddDesk(myButtons[row * 10 + i]);
                     }
 
                     if (row_ == row && col_ < col)
                     {
                         for (int i = col_; i <= col_ + (ShipSize - 1); i++)
-                            newShip.SetDesk(myButtons[row * 10 + i]);
+                            newShip.AddDesk(myButtons[row * 10 + i]);
                     }
 
                     if (col_ == col && row_ > row)
                     {
                         for (int i = row_ - (ShipSize - 1); i <= row_; i++)
-                            newShip.SetDesk(myButtons[i * 10 + col]);
+                            newShip.AddDesk(myButtons[i * 10 + col]);
                     }
 
                     if (col_ == col && row_ < row)
                     {
                         for (int i = row_; i <= row_ + (ShipSize - 1); i++)
-                            newShip.SetDesk(myButtons[i * 10 + col]);
+                            newShip.AddDesk(myButtons[i * 10 + col]);
                     }
                     curShip.Clear();
                     myShips.Add(newShip);
@@ -723,7 +781,7 @@ namespace Battleships
 
         private void MyFieldCellClick(object sender, RoutedEventArgs e)
         {
-            switch(gameStage)
+            switch(GStage)
             {
                 case GameStage.ArrangingShips:
                     {
@@ -764,11 +822,11 @@ namespace Battleships
 
         private void EnemyCellClick(object sender, RoutedEventArgs e)
         {
-            switch (gameStage)
+            switch (GStage)
             {
                 case GameStage.ArrangingShips:
                     {
-                        MessageBox.Show("Игра еще не началась. Для начала на своем поле раставьте кормабли");
+                        MessageBox.Show("Игра еще не началась. Для начала на своем поле расставьте корабли");
                         break;
                     }
                 case GameStage.Battle_wait:
@@ -878,7 +936,6 @@ namespace Battleships
             }
 
 
-
             if (curShip.Count > 0)
             {
                 int row_, col_;
@@ -924,28 +981,24 @@ namespace Battleships
 
         private void Set4(object sender, RoutedEventArgs e)
         {
-            ShipSize = 4;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
             curShip.Clear();
         }
         private void Set3(object sender, RoutedEventArgs e)
         {
-            ShipSize = 3;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
             curShip.Clear();
         }
         private void Set2(object sender, RoutedEventArgs e)
         {
-            ShipSize = 2;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
             curShip.Clear();
         }
         private void Set1(object sender, RoutedEventArgs e)
         {
-            ShipSize = 1;
             foreach (Cell cell in curShip)
                 cell.IsDesk = false;
             curShip.Clear();
@@ -954,14 +1007,22 @@ namespace Battleships
 
         ~MainWindow()
         {
+            mynet.StopConnection();
             if (mynet.IsServerActive)
-                mynet.StopServer();
+                mynet.StopConnection(); 
 
         }
 
         private void Tb_player1_TextChanged(object sender, TextChangedEventArgs e)
         {
             Player1_name = tb_player1.Text;
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            mynet.StopConnection();
+            if (mynet.IsServerActive)
+                mynet.StopServer();
         }
     }
 }

@@ -27,7 +27,6 @@ namespace Battleships
         private Socket connection;
         private Client client;
         private string myName;
-        private string test;
 
         public Network(string _myName = "")
         {
@@ -73,10 +72,8 @@ namespace Battleships
             set
             {
                 this.playerName = value;
-                if (this.IsServerActive)
-                {
-                    this.lstClients[0].PlayerName = value;
-                }
+                this.lstClients[0].PlayerName = value;
+                OnPropertyChanged("PlayerName");
             }
         }
 
@@ -151,24 +148,6 @@ namespace Battleships
             return msg.ToString();
         }
 
-        public void KillSocket(Socket socket)
-        {
-
-            if (socket == null) return;
-            try
-            {
-                socket.Shutdown(SocketShutdown.Both);
-            }
-            catch (Exception)
-            {
-
-            }
-            finally
-            {
-                socket.Close();
-            }
-        }
-
         public void StartServer()
         {
             if (IsServerActive) return;
@@ -186,7 +165,8 @@ namespace Battleships
                 listenSocket.Listen(1);
 
                 waitConnectionToken = new CancellationTokenSource();
-                thread = new Thread(() => WaitForConnections(waitConnectionToken.Token));
+                waitMessagesToken = new CancellationTokenSource();
+                thread = new Thread(() => WaitForConnections(waitConnectionToken.Token, waitMessagesToken.Token));
                 thread.Start();
                 this.IsServerActive = true;
                 State = "Server is active. Wait connection";
@@ -202,181 +182,11 @@ namespace Battleships
             }
         }
 
-        public void StopServer()
-        {
-            if (this.thread != null)
-            {
-                waitConnectionToken.Cancel();
-            }
-
-            KillSocket(listenSocket);
-
-            if (ipEndPoint != null)
-                ipEndPoint = null;
-
-            this.IsServerActive = false;
-        }
-
-        private void WaitForConnections(CancellationToken token)
-        {
-            while (true)
-            {
-                if (listenSocket == null) return;
-                client = new Client();
-                client.PlayerName = "NewUser"; // Временное имя пользователя
-
-                //PlayerName = "NewUser"; // Временное имя пользователя
-                try
-                {
-                    
-                    client.Socket = listenSocket.Accept();
-                    this.dispatcher.Invoke(new Action(() =>
-                    {
-                        lstClients.Add(client);
-                    }), null);
-
-                    //как только соединение установлено получаем первое собщение от клиента в котором должно содержать имя игрока бросившего нам вызов
-                    client.Thread = new Thread(() => GetMessages(client,token));
-                    client.Thread.Start();
-                    
-                }
-                catch (Exception ex)
-                {
-                    State = "/Error -Accept connection fail! " + ex.Message;
-                }
-
-                if (token.IsCancellationRequested)
-                    return;
-
-            }
-        }
-
-       
-
-        private void GetMessages(Client client, CancellationToken token)
-        {
-            //ожидаем в бесконечном цикле сообщения
-            while (true)
-            {
-                try
-                {
-                    //if (!client.IsSocketConnected())
-                    //{
-                    //    this.dispatcher.Invoke(new Action(() =>
-                    //    {
-                    //        lstClients.Remove(client);
-                    //        client.Dispose();
-                    //    }), null);
-
-                    //    return;
-                    //}
-
-                    byte[] inf = new byte[1024];
-                    int x = lstClients[0].Socket.Receive(inf);
-                    if (x > 0)
-                    {
-                        string strMessage = Encoding.Unicode.GetString(inf);
-                        //выполняем полученную команду
-                        if (strMessage.Substring(0, 10) == "/go_battle")
-                        {
-                            string newUsername = strMessage.Replace("/go_battle ", "").Trim('\0');
-                            SendMessage("/my_name " + myName);
-                            test = newUsername;
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                PlayerName = newUsername;
-                                State = "/go_battle";
-                            }), null);
-
-                        }
-                        if (strMessage.Substring(0, 8) == "/my_name")
-                        {
-                            string newUsername = strMessage.Replace("/my_name ", "").Trim('\0');
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                PlayerName = newUsername;
-                            }), null);
-                        }
-                        if (strMessage.Substring(0, 4) == "/Yes")
-                        {
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                State = "/Yes";
-                            }), null);
-                        }
-                        if (strMessage.Substring(0, 3) == "/No")
-                        {
-
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                State = "/No";
-                            }), null);
-                            KillSocket(client.Socket);
-                            client.Socket = null;
-                        }
-                        if (strMessage.Substring(0, 7) == "/Battle")
-                        {
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                State = "/Battle";
-                            }), null);
-                        }
-                        if (strMessage.Substring(0, 4) == "/hit")
-                        {
-                            string xy = strMessage.Replace("/hit", "").Trim('\0');
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                State = "/hit" + xy;
-                            }), null);
-                        }
-                        if (strMessage.Substring(0, 14) == "/AttackResult ")
-                        {
-                            string AttackResult = strMessage.Trim('\0');
-                            this.dispatcher.Invoke(new Action(() =>
-                            {
-                                State =  AttackResult;
-                            }), null);
-                        }
-
-                    }
-                }
-                catch (Exception)
-                {
-                    this.dispatcher.Invoke(new Action(() =>
-                    {
-                        lstClients.Remove(client);
-                        client.Dispose();
-                    }), null);
-                    return;
-                }
-                if (token.IsCancellationRequested)
-                    return;
-            }
-        }
-
-        public void SendMessage(string msg)
-        {
-            this.SendMessage(client, msg);
-        }
-
-        private void SendMessage(Client from, string strMessage)
-        {
-            try
-            {
-                lstClients[0].Socket.Send(Encoding.Unicode.GetBytes(strMessage));
-            }
-            catch (Exception ex)
-            {
-                State = "/Error -Send message fail! " + ex.Message;
-            }
-        }
-
-        public void CreateConnect()
+        public void StartConnection()
         {
             if (this.IsClientConnected) return;
 
             client = new Client();
-            //PlayerName = "NewUser"; // Временное имя пользователя
             try
             {
                 ipEndPoint = new IPEndPoint(ip, port);
@@ -403,10 +213,153 @@ namespace Battleships
             }
         }
 
-        public void StopConnection()
+       private void WaitForConnections(CancellationToken _waitConnectionToken, CancellationToken _waitMessagesToken)
         {
-            KillSocket(client.Socket);
-            client.Socket = null;
+            while (true)
+            {
+                if (listenSocket == null) return;
+                client = new Client();
+                client.PlayerName = "NewUser"; // Временное имя пользователя
+
+                try
+                {
+                    
+                    client.Socket = listenSocket.Accept();
+                    client.Thread = new Thread(() => GetMessages(client,_waitMessagesToken));
+                    client.Thread.Start();
+
+                    this.dispatcher.Invoke(new Action(() =>
+                    {
+                        lstClients.Add(client);
+                    }), null);
+
+                }
+                catch (Exception ex)
+                {
+                    State = "/Error -Accept connection fail! " + ex.Message;
+                }
+
+                if (_waitConnectionToken.IsCancellationRequested)
+                    return;
+
+            }
+        }
+
+       private void GetMessages(Client client, CancellationToken token)
+        {
+            //ожидаем в бесконечном цикле сообщения
+            while (true)
+            {
+                try
+                {
+                    byte[] inf = new byte[1024];
+                    int x = lstClients[0].Socket.Receive(inf);
+                    if (x > 0)
+                    {
+                        string strMessage = Encoding.Unicode.GetString(inf);
+                        //выполняем полученную команду
+                        if (strMessage.Substring(0, 10) == "/go_battle")
+                        {
+                            string newUsername = strMessage.Replace("/go_battle ", "").Trim('\0');
+                            SendMessage("/my_name " + myName);
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                PlayerName = newUsername;
+                                State = "/go_battle";
+                            }), null);
+                            continue;
+
+                        }
+                        if (strMessage.Substring(0, 8) == "/my_name")
+                        {
+                            string newUsername = strMessage.Replace("/my_name ", "").Trim('\0');
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                PlayerName = newUsername;
+                            }), null);
+                            continue;
+                        }
+                        if (strMessage.Substring(0, 4) == "/Yes")
+                        {
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                State = "/Yes";
+                            }), null);
+                            continue;
+                        }
+                        if (strMessage.Substring(0, 3) == "/No")
+                        {
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                State = "/No";
+                            }), null);
+                            StopConnection();
+                            break;
+                        }
+                        if (strMessage.Substring(0, 7) == "/Battle")
+                        {
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                State = "/Battle";
+                            }), null);
+                            continue;
+                        }
+                        if (strMessage.Substring(0, 4) == "/hit")
+                        {
+                            string xy = strMessage.Replace("/hit", "").Trim('\0');
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                State = "/hit" + xy;
+                            }), null);
+                            continue;
+                        }
+                        if (strMessage.Substring(0, 14) == "/AttackResult ")
+                        {
+                            string AttackResult = strMessage.Trim('\0');
+                            this.dispatcher.Invoke(new Action(() =>
+                            {
+                                State =  AttackResult;
+                            }), null);
+                            continue;
+                        }
+
+                    }
+                }
+                catch (Exception)
+                {
+                    this.dispatcher.Invoke(new Action(() =>
+                    {
+                        lstClients.Remove(client);
+                        client.Dispose();
+                    }), null);
+                    return;
+                }
+                if (token.IsCancellationRequested || !IsSocketConnected(lstClients[0].Socket))
+                {
+                    this.dispatcher.Invoke(new Action(() =>
+                    {
+                        State = "/Disconnect";
+                    }), null);
+                    return;
+                }
+            }
+        }
+
+        public void SendMessage(string msg)
+        {
+            this.SendMessage(client, msg);
+        }
+
+        private void SendMessage(Client from, string strMessage)
+        {
+            try
+            {
+                lstClients[0].Socket.Send(Encoding.Unicode.GetBytes(strMessage));
+            }
+            catch (Exception ex)
+            {
+                State = "/Error -Send message fail! " + ex.Message;
+            }
         }
 
         public bool IsServerActive
@@ -421,13 +374,47 @@ namespace Battleships
             private set;
         }
 
-        private Client ClientSet
+        public static bool IsSocketConnected(Socket _socket)
         {
-            get { return client; }
-            set
+            if (!_socket.Connected)
+                return false;
+
+            if (_socket.Available == 0 && _socket.Poll(1000, SelectMode.SelectRead))
+                return false;
+
+            return true;
+        }
+
+        public void StopConnection()
+        {
+            try
             {
-                client = value;
+                waitMessagesToken.Cancel();
+                lstClients[0].Dispose();
+                lstClients.RemoveAt(0);
             }
+            catch (Exception) { }
+        }
+
+        public void StopServer()
+        {
+            if (this.thread != null)
+            {
+                waitConnectionToken.Cancel();
+            }
+            if(listenSocket!=null && listenSocket.Connected)
+                listenSocket.Shutdown(SocketShutdown.Both);
+            listenSocket.Close();
+
+            this.IsServerActive = false;
+        }
+
+        ~Network()
+        {
+            StopConnection();
+            if (IsServerActive)
+                StopServer();
+
         }
     }
 }

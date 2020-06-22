@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Battleships"
         mc:Ignorable="d"
-        Title="Сетевая игра 'Морской бой' - курсовой проект" Height="650" Width="800">
+        Title="Сетевая игра 'Морской бой' - курсовой проект" Height="650" Width="800" Closing="Window_Closing">
 
     <DockPanel LastChildFill="True">
         <Menu  DockPanel.Dock="Top" Height="25" VerticalAlignment="Top">
@@ -22,7 +22,7 @@
             </MenuItem>
         </Menu>
         <StatusBar DockPanel.Dock="Bottom" >
-            <TextBox x:Name="tb_statusbar" Text="{Binding State}" TextChanged="Tb_statusbar_TextChanged"/>
+            <TextBox x:Name="tb_statusbar" Text="{Binding State}" TextChanged="StatusChanged_Handler"/>
         </StatusBar>
         <Grid >
             <Grid.ColumnDefinitions>
