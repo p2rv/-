@@ -392,6 +392,7 @@ namespace Battleships
                 waitMessagesToken.Cancel();
                 lstClients[0].Dispose();
                 lstClients.RemoveAt(0);
+                IsClientConnected = false;
             }
             catch (Exception) { }
         }
