@@ -74,18 +74,19 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Client.cs" />
-    <Compile Include="Hit.xaml.cs">
+    <Compile Include="WPF_Components\Cell.cs" />
+    <Compile Include="WPF_Components\Hit.xaml.cs">
       <DependentUpon>Hit.xaml</DependentUpon>
     </Compile>
     <Compile Include="Network.cs" />
     <Compile Include="NewGameWindow.xaml.cs">
       <DependentUpon>NewGameWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Score.cs" />
-    <Compile Include="Sunk.xaml.cs">
+    <Compile Include="WPF_Components\Score.cs" />
+    <Compile Include="WPF_Components\Sunk.xaml.cs">
       <DependentUpon>Sunk.xaml</DependentUpon>
     </Compile>
-    <Page Include="Hit.xaml">
+    <Page Include="WPF_Components\Hit.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -105,7 +106,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Sunk.xaml">
+    <Page Include="WPF_Components\Sunk.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

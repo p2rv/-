@@ -1,24 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Net;
-using System.Net.Sockets;
 
 namespace Battleships
 {
-
-
     public enum AttackResult
     {
         None,
@@ -50,59 +37,6 @@ namespace Battleships
         My,
         Enemy
     }
-
-    public class Cell : Button
-    {
-        private bool isdesk = false;
-        private bool isdamage = false;
-
-        public bool IsDesk
-        {
-            get { return isdesk; }
-            set
-            {
-                isdesk = value;
-                this.Background = Brushes.Transparent;
-                if (isdesk)
-                    this.Background = Brushes.Green;
-            }
-        }
-        public bool IsFree
-        {
-            get { return !isdesk; }
-        }
-        public bool IsDamage
-        {
-            get { return isdamage; }
-            set
-            {
-                isdamage = value;
-                if (isdamage)
-                {
-                    if (isdesk)
-                    {
-                        Content = "X";
-                        Foreground = Brushes.Red;
-                        FontWeight = FontWeights.Bold;
-                    }
-                    else
-                    {
-                        Content = "o";
-                        Foreground = Brushes.SlateGray;
-                        FontWeight = FontWeights.Bold;
-                    }
-                }
-                else
-                {
-                    Content = "";
-                    Foreground = Brushes.Transparent;
-                    FontWeight = FontWeights.Bold;
-                }
-            }
-        }
-    }
-
- 
 
     public class Ship
     {
