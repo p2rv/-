@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -178,7 +176,7 @@ namespace Battleships
                 //подчищаем хвосты
                 StopServer();
                 //сообщаем об ошибке
-                State = "/Error -Start server fail! " + ex.Message + "Source: " + ex.Source;
+                //State = "Разрешается только одно использование адреса сокета (протокол/сетевой адрес/порт) ";
             }
         }
 
@@ -197,6 +195,7 @@ namespace Battleships
                 this.dispatcher.Invoke(new Action(() =>
                 {
                     lstClients.Add(client);
+                    IsClientConnected = true;
                 }), null);
 
                 SendMessage("/go_battle " + MyName);
@@ -231,6 +230,7 @@ namespace Battleships
                     this.dispatcher.Invoke(new Action(() =>
                     {
                         lstClients.Add(client);
+                        this.IsClientConnected = true;
                     }), null);
 
                 }
@@ -368,10 +368,11 @@ namespace Battleships
             private set;
         }
 
+        private bool isClientConnected=false;
         public bool IsClientConnected
         {
-            get;
-            private set;
+            get { return isClientConnected; }
+            private set { isClientConnected = value; OnPropertyChanged("IsClientConnected"); }
         }
 
         public static bool IsSocketConnected(Socket _socket)

@@ -74,6 +74,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Client.cs" />
+    <Compile Include="WPF_Components\BooleanToClientStatusMessageConverter.cs" />
+    <Compile Include="WPF_Components\BooleanToServerStatusMessageConverter.cs" />
+    <Compile Include="WPF_Components\BooleanToBrushConverter.cs" />
     <Compile Include="WPF_Components\Cell.cs" />
     <Compile Include="WPF_Components\Hit.xaml.cs">
       <DependentUpon>Hit.xaml</DependentUpon>

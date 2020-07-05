@@ -259,7 +259,7 @@ namespace Battleships
 
             mynet = new Network();
             this.DataContext = mynet;
-            Player1_name = "loser006";
+            Player1_name = "User007";
             mynet.StartServer();
             
         }
@@ -468,6 +468,7 @@ namespace Battleships
                     tb_sunk.Enemy++;
                     tb_statusbar.Text = "Мы проиграли!(((";
                     MessageBox.Show("You are lose!", "Поражение");
+                    tb_statusbar.Text = "";
                     GStage = GameStage.Finished;
                     break;
             }
