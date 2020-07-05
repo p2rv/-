@@ -102,6 +102,8 @@ namespace Battleships
         }
     }
 
+ 
+
     public class Ship
     {
         private List<Cell> shipCell=new List<Cell>();
@@ -282,6 +284,7 @@ namespace Battleships
                 gStage = value;
             }
         }
+
         private void InitializeGame()
         {
             tb_player2.Text = "";
@@ -295,6 +298,9 @@ namespace Battleships
             ClearField();
             FillField();
             uaShips.ValueChanged += UnallocatedChanged;
+            tb_score.My = tb_score.Enemy = 0;
+            tb_hit.My = tb_hit.Enemy = 0;
+            tb_sunk.My = tb_sunk.Enemy = 0;
         }
 
         private WhoseTurn turn;
@@ -481,7 +487,7 @@ namespace Battleships
       
         private void Hit_Handler(int row, int col)
         {
-            
+            tb_score.Enemy++;
             Cell cell = myButtons[row * 10 + col];
             cell.IsDamage = true;
             AttackResult attack = AttackResult.None;
@@ -516,20 +522,26 @@ namespace Battleships
                     break;
                 case AttackResult.Hit:
                     tb_statusbar.Text = "В нас попали!(";
+                    tb_hit.Enemy++;
                     break;
                 case AttackResult.Destroy:
                     tb_statusbar.Text = "Наш корабль затоплен!((";
+                    tb_hit.Enemy++;
+                    tb_sunk.Enemy++;
                     break;
                 case AttackResult.Win:
+                    tb_hit.Enemy++;
+                    tb_sunk.Enemy++;
                     tb_statusbar.Text = "Мы проиграли!(((";
-                    GStage = GameStage.Finished;
                     MessageBox.Show("You are lose!", "Поражение");
+                    GStage = GameStage.Finished;
                     break;
             }
         }
 
         private void Attack_Handler(int _attack)
         {
+            tb_score.My++;
             AttackResult attack = (AttackResult)_attack;
             switch (attack)
             {
@@ -543,6 +555,7 @@ namespace Battleships
                     lastCell.IsDamage = true;
                     Turn = WhoseTurn.My;
                     tb_statusbar.Text = "Есть попадание";
+                    tb_hit.My++;
                     break;
                 case AttackResult.Destroy:
                     lastCell.IsDesk = true;
@@ -553,12 +566,16 @@ namespace Battleships
                     enemyShips.Add(destroyedShip);
                     destroyedShip.UpdateState();
                     tb_statusbar.Text = "Затопил";
+                    tb_hit.My++;
+                    tb_sunk.My++;
                     break;
                 case AttackResult.Win:
-                    GStage = GameStage.Finished;
+                    tb_hit.My++;
+                    tb_sunk.My++;
                     tb_statusbar.Text = "Победа";
                     MessageBox.Show("You are win!", "Победа");
                     tb_statusbar.Text = "";
+                    GStage = GameStage.Finished;
                     break;
             }
         }
@@ -1027,14 +1044,15 @@ namespace Battleships
 
         private void Help_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("«Морской бой» — игра для двух участников, в которой игроки по очереди называют координаты на неизвестной им карте соперника. " +
+            MessageBox.Show("«Морской бой» — игра для двух участников, в которой игроки по очереди атакуют корабли, находящиеся на поле соперника." +
                 "Если у соперника по этим координатам имеется корабль (координаты заняты), то корабль или его часть «топится», а попавший получает право сделать ещё один ход. " +
                 "Цель игрока — первым потопить все корабли противника. " +
                 "Игровое поле — обычно квадрат 10×10 у каждого игрока, на котором размещается флот кораблей. На поле размещаются:" +
                 "    1 корабль — ряд из 4 клеток(«четырёхпалубный»; линкор) " +
                 "    2 корабля — ряд из 3 клеток(«трёхпалубные»; крейсера) " +
                 "    3 корабля — ряд из 2 клеток(«двухпалубные»; эсминцы) " +
-                "    4 корабля — 1 клетка(«однопалубные»; торпедные катера)");
+                "    4 корабля — 1 клетка(«однопалубные»; торпедные катера) " +
+                "Первым ходит тот игрок кто первым расставит все свои корабли на игровом поле. ");
         }
     }
 }

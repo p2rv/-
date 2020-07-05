@@ -10,11 +10,7 @@
     <DockPanel LastChildFill="True">
         <Menu  DockPanel.Dock="Top" Height="25" VerticalAlignment="Top">
             <MenuItem Header="New game" Click="NewGame"/>
-            <MenuItem Header="Settings" >
-                <MenuItem Header="Настройки"/>
-                <MenuItem Header="Таблица рекордов"/>
-                <MenuItem Header="Завершить игру"/>
-            </MenuItem>
+            
 
             <MenuItem Header="Help" >
                 <MenuItem Header="Правила игры" Click="Help_Click"></MenuItem>
@@ -273,6 +269,13 @@
                     <TextBox Text="I" FontSize="18" FontWeight="Bold" IsReadOnly="True" Grid.Column="0" Grid.Row="9" HorizontalContentAlignment="Center" BorderBrush="#FF9B1D1D" CaretBrush="#FF631717" />
                     <TextBox Text="J" FontSize="18" FontWeight="Bold" IsReadOnly="True" Grid.Column="0" Grid.Row="10" HorizontalContentAlignment="Center" BorderBrush="#FF9B1D1D" CaretBrush="#FF631717" />
                 </Grid>
+                <GroupBox Header="Счет" Margin="0,0,1,0">
+                    <StackPanel Orientation="Vertical">
+                        <local:Score x:Name="tb_score" FontSize="20" FontWeight="Bold" Margin="0" Width="70" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center">0 : 0</local:Score>
+                        <local:Hit x:Name="tb_hit"></local:Hit>
+                        <local:Sunk x:Name="tb_sunk"></local:Sunk>
+                    </StackPanel>
+                </GroupBox>
 
             </StackPanel>
         </Grid>
